@@ -63,7 +63,7 @@ const toolGroups: ToolGroup[] = [
       },
       {
         id: "ai_edit",
-        label: "AI Edit",
+        label: "AI Remover",
         icon: <Paintbrush className="h-4 w-4" />,
         credits: 25,
         enabled: true,

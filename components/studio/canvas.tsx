@@ -86,9 +86,8 @@ export function Canvas() {
   const containerRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
 
-  // ── AI Edit / Mask Painting State ───────────────────────────────────────
-  const isAiEditing = selectedTool === "ai_edit";
-  const maskHasPaint = useMaskPainterStore((s) => s.hasMask);
+  // ── AI Remover / Mask Painting State ────────────────────────────────────
+  const isAiPainting = selectedTool === "ai_edit";
 
   // ── Color Picker / Eyedropper State ──────────────────────────────────────
   const isColorPicking = selectedTool === "color_picker";
@@ -236,7 +235,7 @@ export function Canvas() {
           }
           break;
         case "[":
-          if (isAiEditing) {
+          if (isAiPainting) {
             e.preventDefault();
             useMaskPainterStore.getState().setBrushSize(
               Math.max(5, useMaskPainterStore.getState().brushSize - 5)
@@ -244,7 +243,7 @@ export function Canvas() {
           }
           break;
         case "]":
-          if (isAiEditing) {
+          if (isAiPainting) {
             e.preventDefault();
             useMaskPainterStore.getState().setBrushSize(
               Math.min(100, useMaskPainterStore.getState().brushSize + 5)
@@ -327,7 +326,7 @@ export function Canvas() {
 
   // Handle pan with drag (disabled in color picker mode)
   const handleMouseDown = (e: React.MouseEvent) => {
-    if (isColorPicking || isAiEditing) return;
+    if (isColorPicking || isAiPainting) return;
     if (zoom > 1) {
       setIsDragging(true);
       setDragStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
@@ -508,7 +507,7 @@ export function Canvas() {
       className={cn(
         "relative flex flex-1 items-center justify-center overflow-hidden p-12 animate-in fade-in zoom-in-95 duration-700 transition-colors duration-300",
         getBackgroundStyle(),
-        isAiEditing
+        isAiPainting
           ? "cursor-none"
           : isColorPicking
           ? "cursor-crosshair"
@@ -566,8 +565,8 @@ export function Canvas() {
             }}
           />
 
-          {/* Mask painting overlay for AI Edit tool */}
-          {isAiEditing && (
+          {/* Mask painting overlay — only for Remove mode */}
+          {isAiPainting && (
             <MaskCanvas imageRef={imageRef} zoom={zoom} />
           )}
         </div>
@@ -882,13 +881,13 @@ export function Canvas() {
         </div>
       </div>
 
-      {/* AI Edit mode indicator */}
-      {isAiEditing && !showInfo && (
+      {/* AI Edit mode indicator — only for Remove (painting) mode */}
+      {isAiPainting && !showInfo && (
         <div className="absolute top-6 left-6 rounded-lg bg-[#141517] backdrop-blur-2xl px-3 py-2 shadow-[0_0_10px_0_rgba(0,0,0,0.6)] animate-in slide-in-from-left-5 duration-300">
           <div className="flex items-center gap-2">
             <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
             <span className="text-xs font-semibold text-white/70">
-              Paint over the area to edit
+              Paint over the area to remove
             </span>
           </div>
         </div>

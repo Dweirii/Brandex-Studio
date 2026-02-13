@@ -11,16 +11,14 @@ import {
 } from "@/hooks/use-mask-painter";
 import { handleError } from "@/lib/error-handler";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Card,
   CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Paintbrush, RotateCcw, Coins, Minus, Plus } from "lucide-react";
+import { Eraser, RotateCcw, Coins, Minus, Plus } from "lucide-react";
 import { toast } from "sonner";
 
 const COST = 25;
@@ -40,11 +38,7 @@ export function AiEditPanel() {
 
   const brushSize = useMaskPainterStore((s) => s.brushSize);
   const hasMask = useMaskPainterStore((s) => s.hasMask);
-  const editMode = useMaskPainterStore((s) => s.editMode);
-  const prompt = useMaskPainterStore((s) => s.prompt);
   const setBrushSize = useMaskPainterStore((s) => s.setBrushSize);
-  const setEditMode = useMaskPainterStore((s) => s.setEditMode);
-  const setPrompt = useMaskPainterStore((s) => s.setPrompt);
 
   const activeImage = images.find((img) => img.id === activeImageId);
   const canAfford = balance >= COST;
@@ -60,47 +54,26 @@ export function AiEditPanel() {
     useMaskPainterStore.getState().setHasMask(false);
   }, []);
 
-  // ── Apply edit ──────────────────────────────────────────────────────────────
+  // ── Apply ─────────────────────────────────────────────────────────────────
 
   const handleApply = useCallback(async () => {
-    if (isSubmittingRef.current) return;
+    if (isSubmittingRef.current || !activeImage || !projectId) return;
     isSubmittingRef.current = true;
-
-    if (!activeImage || !projectId) {
-      toast.error("Please select an image first");
-      isSubmittingRef.current = false;
-      return;
-    }
 
     if (!hasMask) {
       toast.error("Paint Over the Area", {
-        description:
-          "Brush over the part of the image you want to edit, then try again.",
+        description: "Brush over the object you want to remove, then try again.",
         duration: 5000,
       });
       isSubmittingRef.current = false;
       return;
     }
 
-    if (editMode === "edit" && !prompt.trim()) {
-      toast.error("Describe Your Edit", {
-        description:
-          'Tell us what you want — e.g. "change to red", "make it leather".',
-        duration: 5000,
-      });
-      isSubmittingRef.current = false;
-      return;
-    }
-
-    // ── IMPORTANT: capture the mask BEFORE setProcessing ──────────────────
-    // setProcessing(true) triggers a re-render in page.tsx that unmounts
-    // and remounts Canvas, which destroys the mask canvas from the DOM.
-    // So we grab everything we need from the DOM first.
-
+    // Capture mask BEFORE setProcessing (which remounts Canvas)
     const maskCanvas = getMaskCanvas();
     if (!maskCanvas) {
       toast.error("No Mask Found", {
-        description: "Paint over the area you want to edit, then try again.",
+        description: "Paint over the area you want to remove, then try again.",
         duration: 5000,
       });
       isSubmittingRef.current = false;
@@ -120,12 +93,9 @@ export function AiEditPanel() {
       return;
     }
 
-    const actionLabel =
-      editMode === "remove" ? "Removing selected area..." : "Applying AI edit...";
-    setProcessing(true, actionLabel);
+    setProcessing(true, "Removing selected area...");
 
     try {
-      // 1. Fetch the source image as a blob
       const imageRes = await fetch(activeImage.url);
       if (!imageRes.ok) {
         toast.error("Source Image Unavailable", {
@@ -137,18 +107,12 @@ export function AiEditPanel() {
       }
       const imageBlob = await imageRes.blob();
 
-      // 2. Build FormData and send to backend
       const formData = new FormData();
       formData.append("image", imageBlob, "image.png");
       formData.append("mask", maskBlob, "mask.png");
       formData.append("projectId", projectId);
-      formData.append("editMode", editMode);
+      formData.append("editMode", "remove");
       formData.append("parentId", activeImage.id);
-      if (editMode === "edit") {
-        formData.append("prompt", prompt.trim());
-      } else {
-        formData.append("prompt", "remove the selected object, fill with the surrounding background");
-      }
 
       const result = await studioUpload<{
         id: string;
@@ -168,19 +132,10 @@ export function AiEditPanel() {
       });
 
       setBalanceFromResponse(result.newBalance);
-
-      // Reset mask state
       handleClearMask();
-      useMaskPainterStore.getState().setPrompt("");
-      toast.success(
-        editMode === "remove"
-          ? "Object removed successfully!"
-          : "Edit applied successfully!"
-      );
+      toast.success("Object removed successfully!");
     } catch (error) {
-      handleError(error, {
-        operation: editMode === "remove" ? "remove object" : "apply AI edit",
-      });
+      handleError(error, { operation: "remove object" });
     } finally {
       isSubmittingRef.current = false;
       setProcessing(false);
@@ -189,8 +144,6 @@ export function AiEditPanel() {
     activeImage,
     projectId,
     hasMask,
-    editMode,
-    prompt,
     setProcessing,
     studioUpload,
     addImage,
@@ -204,74 +157,15 @@ export function AiEditPanel() {
       <Card className="border-0 shadow-none bg-transparent">
         <CardHeader className="px-0 pt-0 pb-3">
           <CardTitle className="flex items-center gap-2 text-sm">
-            <Paintbrush className="h-4 w-4" />
-            AI Edit
+            <Eraser className="h-4 w-4" />
+            AI Remover
           </CardTitle>
           <CardDescription>
-            Paint over the area you want to change, then describe your edit.
+            Paint over any object to erase it from the image. The AI will
+            cleanly fill the area with the surrounding background.
           </CardDescription>
         </CardHeader>
       </Card>
-
-      {/* ── Edit Mode ──────────────────────────────────────────────────── */}
-      <div className="space-y-3">
-        <Label>Edit Mode</Label>
-        <RadioGroup
-          value={editMode}
-          onValueChange={(v) => setEditMode(v as "edit" | "remove")}
-        >
-          <div className="flex items-start space-x-2 rounded-lg border bg-card p-3">
-            <RadioGroupItem
-              value="edit"
-              id="mode-edit"
-              className="mt-0.5"
-            />
-            <div className="flex-1">
-              <Label htmlFor="mode-edit" className="cursor-pointer font-medium">
-                Edit / Recolor
-              </Label>
-              <p className="text-xs text-muted-foreground">
-                Change color, material, or appearance of the selected area
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-start space-x-2 rounded-lg border bg-card p-3">
-            <RadioGroupItem
-              value="remove"
-              id="mode-remove"
-              className="mt-0.5"
-            />
-            <div className="flex-1">
-              <Label
-                htmlFor="mode-remove"
-                className="cursor-pointer font-medium"
-              >
-                Remove
-              </Label>
-              <p className="text-xs text-muted-foreground">
-                Remove the selected object and fill with background
-              </p>
-            </div>
-          </div>
-        </RadioGroup>
-      </div>
-
-      {/* ── Prompt (only for edit mode) ───────────────────────────────── */}
-      {editMode === "edit" && (
-        <div className="space-y-2">
-          <Label htmlFor="edit-prompt">Describe Your Edit</Label>
-          <Textarea
-            id="edit-prompt"
-            placeholder='e.g. "change the shirt to red", "make it a leather jacket", "add floral pattern"...'
-            value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
-            rows={3}
-            maxLength={2000}
-            className="resize-none"
-          />
-        </div>
-      )}
 
       {/* ── Brush Size ────────────────────────────────────────────────── */}
       <div className="space-y-2.5">
@@ -283,7 +177,7 @@ export function AiEditPanel() {
         </div>
         <div className="flex items-center gap-3">
           <button
-            className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/[0.06] text-white/50 hover:text-white hover:bg-white/[0.1] transition-all"
+            className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/6 text-white/50 hover:text-white hover:bg-white/10 transition-all"
             onClick={() => setBrushSize(Math.max(5, brushSize - 5))}
           >
             <Minus className="h-3 w-3" />
@@ -301,7 +195,7 @@ export function AiEditPanel() {
             }}
           />
           <button
-            className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/[0.06] text-white/50 hover:text-white hover:bg-white/[0.1] transition-all"
+            className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/6 text-white/50 hover:text-white hover:bg-white/10 transition-all"
             onClick={() => setBrushSize(Math.min(100, brushSize + 5))}
           >
             <Plus className="h-3 w-3" />
@@ -315,7 +209,7 @@ export function AiEditPanel() {
           <div className="flex items-center gap-2">
             <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
             <span className="text-[11px] font-medium text-primary/80">
-              Area selected — ready to edit
+              Area selected — ready to remove
             </span>
           </div>
           <button
@@ -332,24 +226,14 @@ export function AiEditPanel() {
         <Button
           className="w-full"
           size="lg"
-          disabled={
-            !activeImage ||
-            isProcessing ||
-            !canAfford ||
-            !hasMask ||
-            (editMode === "edit" && !prompt.trim())
-          }
+          disabled={!activeImage || isProcessing || !canAfford || !hasMask}
           onClick={handleApply}
         >
           {!canAfford
             ? "Not enough credits"
             : !hasMask
             ? "Paint an area first"
-            : editMode === "edit" && !prompt.trim()
-            ? "Describe your edit above"
-            : editMode === "remove"
-            ? "Remove Selected"
-            : "Apply Edit"}
+            : "Remove Selected"}
         </Button>
 
         <Button
@@ -380,10 +264,10 @@ export function AiEditPanel() {
       )}
 
       {/* ── Tip ───────────────────────────────────────────────────────── */}
-      <div className="rounded-xl bg-white/[0.03] p-3">
+      <div className="rounded-xl bg-white/3 p-3">
         <p className="text-[11px] text-white/30 leading-relaxed">
           <span className="font-semibold text-white/50">How it works:</span>{" "}
-          Paint over the area you want to change using the brush. Use{" "}
+          Paint over the object you want to remove. Use{" "}
           <kbd className="px-1.5 py-0.5 rounded bg-white/10 font-mono text-[10px] text-white/50">
             [
           </kbd>{" "}
@@ -391,7 +275,7 @@ export function AiEditPanel() {
           <kbd className="px-1.5 py-0.5 rounded bg-white/10 font-mono text-[10px] text-white/50">
             ]
           </kbd>{" "}
-          to resize the brush. The AI will only modify the painted area.
+          to resize the brush. The AI will cleanly erase the painted area.
         </p>
       </div>
     </div>
