@@ -8,6 +8,7 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { useStudioApi } from "./use-studio-api";
+import { handleError } from "@/lib/error-handler";
 import { toast } from "sonner";
 
 export interface ExportPreset {
@@ -35,8 +36,7 @@ export function useExportPresets() {
       const data = await studioRequest<ExportPreset[]>("/export-presets");
       setPresets(data);
     } catch (error) {
-      console.error("[ExportPresets] Fetch error:", error);
-      toast.error("Failed to load export presets");
+      handleError(error, { operation: "load export presets" });
     } finally {
       setIsLoading(false);
     }
@@ -58,8 +58,7 @@ export function useExportPresets() {
         toast.success("Preset created");
         return newPreset;
       } catch (error) {
-        console.error("[ExportPresets] Create error:", error);
-        toast.error("Failed to create preset");
+        handleError(error, { operation: "create preset" });
         throw error;
       }
     },
@@ -77,8 +76,7 @@ export function useExportPresets() {
         setPresets((prev) => prev.filter((p) => p.id !== presetId));
         toast.success("Preset deleted");
       } catch (error) {
-        console.error("[ExportPresets] Delete error:", error);
-        toast.error("Failed to delete preset");
+        handleError(error, { operation: "delete preset" });
         throw error;
       }
     },
@@ -86,8 +84,14 @@ export function useExportPresets() {
   );
 
   // Export image with preset — uses blob download for cross-origin URLs
+  // Optional `customFilename` lets the caller provide a user-entered name.
   const exportImage = useCallback(
-    async (imageId: string, presetId: string, saveToProject: boolean = false) => {
+    async (
+      imageId: string,
+      presetId: string,
+      saveToProject: boolean = false,
+      customFilename?: string
+    ) => {
       if (!imageId || !presetId) return;
       setIsExporting(true);
       try {
@@ -103,9 +107,12 @@ export function useExportPresets() {
           body: JSON.stringify({ presetId, saveToProject }),
         });
 
+        // Build filename: user-entered > auto-generated default
+        const filename = customFilename
+          ? `${customFilename}.${result.format}`
+          : `brandex-export-${Date.now()}.${result.format}`;
+
         // Fetch as blob for cross-origin download support
-        // (the `download` attribute is ignored for cross-origin URLs)
-        const filename = `brandex-export-${Date.now()}.${result.format}`;
         try {
           const response = await fetch(result.url);
           if (!response.ok) throw new Error("Fetch failed");
@@ -133,8 +140,7 @@ export function useExportPresets() {
 
         return result;
       } catch (error) {
-        console.error("[ExportPresets] Export error:", error);
-        toast.error("Failed to export image");
+        handleError(error, { operation: "export image" });
         throw error;
       } finally {
         setIsExporting(false);

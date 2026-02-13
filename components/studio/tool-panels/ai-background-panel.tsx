@@ -12,8 +12,9 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useStudioStore } from "@/stores/use-studio-store";
-import { useStudioApi, StudioApiError } from "@/hooks/use-studio-api";
+import { useStudioApi } from "@/hooks/use-studio-api";
 import { useCredits } from "@/hooks/use-credits";
+import { handleError } from "@/lib/error-handler";
 import { toast } from "sonner";
 
 const COST = 25;
@@ -62,7 +63,10 @@ export function AiBackgroundPanel() {
     try {
       const imageRes = await fetch(activeImage.url);
       if (!imageRes.ok) {
-        toast.error("Failed to load the source image. Please try selecting a different image.");
+        toast.error("Source Image Unavailable", {
+          description: "Could not load the image. It may have expired — try selecting a different one.",
+          duration: 6000,
+        });
         return;
       }
       const imageBlob = await imageRes.blob();
@@ -98,16 +102,7 @@ export function AiBackgroundPanel() {
       setBalanceFromResponse(result.newBalance);
       toast.success("AI background generated!");
     } catch (error) {
-      console.error("[AiBackground] Error:", error);
-      if (error instanceof StudioApiError && error.requiresCredits) {
-        toast.error("Insufficient credits. Please purchase more credits.");
-      } else {
-        toast.error(
-          error instanceof Error
-            ? error.message
-            : "Failed to generate background"
-        );
-      }
+      handleError(error, { operation: "generate background" });
     } finally {
       isSubmittingRef.current = false;
       setProcessing(false);

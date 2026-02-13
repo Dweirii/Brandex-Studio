@@ -12,6 +12,8 @@ export interface StudioImage {
   parentId?: string | null;
   creditsCost: number;
   createdAt: string;
+  /** User-assigned display name (null = use auto-generated). */
+  name?: string | null;
   // Designer features metadata
   isFavorite?: boolean;
   fileFormat?: string | null;
@@ -34,12 +36,15 @@ export interface StudioProject {
 export type Tool =
   | "remove_bg"
   | "ai_background"
+  | "ai_edit"
   | "generate_flux"
   | "generate_gemini"
   | "generate_typography"
   | "upscale"
   | "relight"
   | "skin_enhance"
+  | "color_picker"
+  | "adjustments"
   | null;
 
 type ViewMode = "browser" | "workspace";
@@ -93,6 +98,7 @@ interface StudioState {
   removeImage: (id: string) => void;
   setActiveImage: (id: string | null) => void;
   toggleFavorite: (id: string) => void;
+  renameImage: (id: string, name: string) => void;
 
   // UI actions
   setTool: (tool: Tool) => void;
@@ -221,6 +227,13 @@ export const useStudioStore = create<StudioState>((set) => ({
     set((state) => ({
       images: state.images.map((img) =>
         img.id === id ? { ...img, isFavorite: !img.isFavorite } : img
+      ),
+    })),
+
+  renameImage: (id, name) =>
+    set((state) => ({
+      images: state.images.map((img) =>
+        img.id === id ? { ...img, name: name || null } : img
       ),
     })),
 

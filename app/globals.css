@@ -312,6 +312,60 @@
     background: rgba(255, 255, 255, 0.2);
   }
 
+  /* Studio range slider */
+  .studio-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 4px;
+    border-radius: 9999px;
+    outline: none;
+    cursor: pointer;
+    transition: opacity 0.15s ease;
+  }
+
+  .studio-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--primary);
+    cursor: pointer;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 0 6px rgba(0, 235, 2, 0.3);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .studio-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.3);
+    box-shadow: 0 0 10px rgba(0, 235, 2, 0.5);
+  }
+
+  .studio-slider::-webkit-slider-thumb:active {
+    transform: scale(1.15);
+  }
+
+  .studio-slider::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--primary);
+    cursor: pointer;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 0 6px rgba(0, 235, 2, 0.3);
+    transition: transform 0.15s ease;
+  }
+
+  .studio-slider::-moz-range-thumb:hover {
+    transform: scale(1.3);
+  }
+
+  .studio-slider::-moz-range-track {
+    height: 4px;
+    border-radius: 9999px;
+  }
+
   /* Smooth glass morphism effects */
   .glass {
     background: rgba(255, 255, 255, 0.05);

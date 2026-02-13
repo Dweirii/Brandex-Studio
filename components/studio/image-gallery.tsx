@@ -3,7 +3,7 @@
 import { useRef, useCallback, useEffect, useState } from "react";
 import { useStudioStore, type StudioImage } from "@/stores/use-studio-store";
 import { cn } from "@/lib/utils";
-import { Download, Coins, X, Plus, ImageIcon, ChevronLeft, ChevronRight, Link as LinkIcon, Star, CheckSquare, Square } from "lucide-react";
+import { Download, Coins, X, Plus, ImageIcon, ChevronLeft, ChevronRight, Link as LinkIcon, Star, CheckSquare, Square, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FavoriteButton } from "./favorite-button";
 import { ImageFilters } from "./image-filters";
@@ -19,7 +19,15 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { handleError } from "@/lib/error-handler";
 import { toast } from "sonner";
+import { DownloadDialog } from "./download-dialog";
+import {
+  getImageDisplayName,
+  buildDownloadFilename,
+  buildDefaultFilename,
+  sanitizeFilename,
+} from "@/hooks/use-image-names";
 
 const typeLabels: Record<string, string> = {
   original: "Original",
@@ -93,6 +101,16 @@ export function ImageGallery({ onUpload }: ImageGalleryProps) {
   // Track last clicked for shift-select
   const [lastClickedId, setLastClickedId] = useState<string | null>(null);
 
+  // ── Download dialog state ──────────────────────────────────────────────
+  const [downloadDialogOpen, setDownloadDialogOpen] = useState(false);
+  const [downloadTarget, setDownloadTarget] = useState<StudioImage | null>(null);
+
+  // ── Inline rename state ────────────────────────────────────────────────
+  const renameImage = useStudioStore((s) => s.renameImage);
+  const [renamingImageId, setRenamingImageId] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState("");
+  const renameInputRef = useRef<HTMLInputElement>(null);
+
   const handleFileChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
@@ -120,7 +138,14 @@ export function ImageGallery({ onUpload }: ImageGalleryProps) {
 
   if (images.length === 0) return null;
 
-  const handleDownload = async (image: StudioImage) => {
+  // Open download dialog for an image
+  const openDownloadDialog = (image: StudioImage) => {
+    setDownloadTarget(image);
+    setDownloadDialogOpen(true);
+  };
+
+  // Perform the actual blob download with a given filename
+  const triggerDownload = async (image: StudioImage, filename: string) => {
     try {
       const response = await fetch(image.url);
       if (!response.ok) throw new Error("Fetch failed");
@@ -128,15 +153,32 @@ export function ImageGallery({ onUpload }: ImageGalleryProps) {
       const blobUrl = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = blobUrl;
-      link.download = `brandex-studio-${image.type}-${image.id.slice(0, 8)}.png`;
+      link.download = filename;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(blobUrl);
     } catch {
-      // Fallback: open in new tab
       window.open(image.url, "_blank");
     }
+  };
+
+  // Inline rename helpers
+  const startRename = (image: StudioImage) => {
+    setRenamingImageId(image.id);
+    setRenameValue(getImageDisplayName(image));
+    requestAnimationFrame(() => {
+      renameInputRef.current?.focus();
+      renameInputRef.current?.select();
+    });
+  };
+
+  const commitRename = () => {
+    if (renamingImageId && renameValue.trim()) {
+      renameImage(renamingImageId, renameValue.trim());
+      toast.success("Image renamed");
+    }
+    setRenamingImageId(null);
   };
 
   const handleCopyUrl = async (image: StudioImage) => {
@@ -144,7 +186,7 @@ export function ImageGallery({ onUpload }: ImageGalleryProps) {
       await navigator.clipboard.writeText(image.url);
       toast.success("Image URL copied to clipboard!");
     } catch (error) {
-      toast.error("Failed to copy URL");
+      handleError(error, { operation: "copy URL", silent: true });
     }
   };
 
@@ -177,7 +219,7 @@ export function ImageGallery({ onUpload }: ImageGalleryProps) {
       exitSelectionMode();
       toast.success(`Deleted ${idsArray.length} images`);
     } catch (error) {
-      toast.error("Failed to delete images");
+      handleError(error, { operation: "delete images" });
     }
   };
 
@@ -193,7 +235,7 @@ export function ImageGallery({ onUpload }: ImageGalleryProps) {
       idsArray.forEach((id) => toggleFavorite(id));
       toast.success(`Favorited ${idsArray.length} images`);
     } catch (error) {
-      toast.error("Failed to favorite images");
+      handleError(error, { operation: "favorite images" });
     }
   };
 
@@ -206,13 +248,13 @@ export function ImageGallery({ onUpload }: ImageGalleryProps) {
     try {
       const zip = new JSZip();
       
-      // Download all images and add to zip
+      // Download all images and add to zip (using display names)
       for (const image of selectedImages) {
         try {
           const response = await fetch(image.url);
           if (!response.ok) continue;
           const blob = await response.blob();
-          const filename = `${image.type}_${image.id.slice(0, 8)}.png`;
+          const filename = buildDownloadFilename(image);
           zip.file(filename, blob);
         } catch {
           // Skip failed downloads
@@ -235,7 +277,7 @@ export function ImageGallery({ onUpload }: ImageGalleryProps) {
       toast.success(`Downloaded ${selectedImages.length} images`);
     } catch (error) {
       toast.dismiss(toastId);
-      toast.error("Failed to download images");
+      handleError(error, { operation: "download images" });
     }
   };
 
@@ -250,7 +292,7 @@ export function ImageGallery({ onUpload }: ImageGalleryProps) {
       removeImage(imageId);
       toast.success("Image removed");
     } catch (error) {
-      toast.error("Failed to delete image");
+      handleError(error, { operation: "delete image" });
     }
   };
 
@@ -357,6 +399,15 @@ export function ImageGallery({ onUpload }: ImageGalleryProps) {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
+                          startRename(image);
+                        }}
+                        className="flex h-5 w-5 items-center justify-center rounded-full bg-[#141517] text-white/70 shadow-[0_0_8px_0_rgba(0,0,0,0.6)] transition-all duration-300 hover:scale-110 hover:text-white"
+                      >
+                        <Pencil className="h-2.5 w-2.5" />
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
                           handleToggleFavorite(image.id, !image.isFavorite);
                         }}
                         className="flex h-5 w-5 items-center justify-center rounded-full bg-[#141517] text-white shadow-[0_0_8px_0_rgba(0,0,0,0.6)] transition-all duration-300 hover:scale-110"
@@ -375,13 +426,16 @@ export function ImageGallery({ onUpload }: ImageGalleryProps) {
                 </TooltipTrigger>
                 <TooltipContent
                   side="top"
-                  className="bg-[#141517] backdrop-blur-2xl shadow-[0_0_10px_0_rgba(0,0,0,0.6)]"
+                  className="bg-[#141517] backdrop-blur-2xl shadow-[0_0_10px_0_rgba(0,0,0,0.6)] max-w-[200px]"
                 >
-                  <p className="text-xs font-semibold text-white">
+                  <p className="text-xs font-semibold text-white truncate">
+                    {getImageDisplayName(image)}
+                  </p>
+                  <p className="text-[10px] text-white/40 mt-0.5">
                     {typeLabels[image.type] || image.type}
                   </p>
                   {image.creditsCost > 0 && (
-                    <p className="flex items-center gap-1.5 text-xs text-white/50 mt-0.5">
+                    <p className="flex items-center gap-1.5 text-[10px] text-white/40 mt-0.5">
                       <Coins className="h-3 w-3" />
                       {image.creditsCost} credits
                     </p>
@@ -484,7 +538,55 @@ export function ImageGallery({ onUpload }: ImageGalleryProps) {
             onBatchDownload={handleBatchDownload}
           />
         )}
+
+        {/* Inline rename popover */}
+        {renamingImageId && (
+          <>
+            <div className="fixed inset-0 z-40" onClick={commitRename} />
+            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50 animate-in fade-in slide-in-from-bottom-2 duration-200">
+              <div className="flex items-center gap-2 rounded-xl bg-[#141517] shadow-[0_0_20px_0_rgba(0,0,0,0.8)] px-3 py-2">
+                <Pencil className="h-3.5 w-3.5 text-white/40 shrink-0" />
+                <input
+                  ref={renameInputRef}
+                  value={renameValue}
+                  onChange={(e) => setRenameValue(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") commitRename();
+                    if (e.key === "Escape") setRenamingImageId(null);
+                  }}
+                  className="bg-transparent text-sm text-white/90 font-medium outline-none w-48 placeholder:text-white/30"
+                  placeholder="Image name..."
+                  spellCheck={false}
+                />
+                <Button
+                  size="sm"
+                  className="h-7 px-3 text-xs"
+                  onClick={commitRename}
+                >
+                  Save
+                </Button>
+              </div>
+            </div>
+          </>
+        )}
       </div>
+
+      {/* Download name dialog */}
+      {downloadTarget && (
+        <DownloadDialog
+          open={downloadDialogOpen}
+          onOpenChange={setDownloadDialogOpen}
+          defaultName={getImageDisplayName(downloadTarget)}
+          format={downloadTarget.fileFormat?.replace("image/", "") || "png"}
+          onDownload={(filename) => {
+            const ext = downloadTarget.fileFormat?.replace("image/", "") || "png";
+            triggerDownload(downloadTarget, `${sanitizeFilename(filename)}.${ext}`);
+          }}
+          onSkip={() => {
+            triggerDownload(downloadTarget, buildDefaultFilename(downloadTarget));
+          }}
+        />
+      )}
     </TooltipProvider>
   );
 }

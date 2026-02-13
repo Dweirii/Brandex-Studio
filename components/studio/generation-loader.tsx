@@ -3,13 +3,11 @@
 import { useEffect, useState, useMemo } from "react";
 import { useStudioStore, type Tool } from "@/stores/use-studio-store";
 import { cn } from "@/lib/utils";
-import { Wand2, BrainCircuit, Type, Sparkles } from "lucide-react";
 
 // ─── Provider configuration ────────────────────────────────────────
 interface ProviderConfig {
   name: string;
   subtitle: string;
-  icon: typeof Wand2;
   gradient: string;
   glowColor: string;
   orbColors: [string, string, string];
@@ -21,7 +19,6 @@ const PROVIDER_CONFIG: Record<string, ProviderConfig> = {
   generate_flux: {
     name: "FLUX Ultra",
     subtitle: "Replicate · FLUX 1.1 Pro Ultra",
-    icon: Wand2,
     gradient: "from-primary/90 via-primary to-emerald-400",
     glowColor: "shadow-primary/25",
     orbColors: ["bg-primary", "bg-emerald-400", "bg-primary/70"],
@@ -35,7 +32,6 @@ const PROVIDER_CONFIG: Record<string, ProviderConfig> = {
   generate_gemini: {
     name: "Gemini",
     subtitle: "Google · Gemini Image Generation",
-    icon: BrainCircuit,
     gradient: "from-primary/90 via-primary to-emerald-400",
     glowColor: "shadow-primary/25",
     orbColors: ["bg-primary", "bg-emerald-400", "bg-primary/70"],
@@ -49,7 +45,6 @@ const PROVIDER_CONFIG: Record<string, ProviderConfig> = {
   generate_typography: {
     name: "Typography",
     subtitle: "Ideogram · v3 Quality",
-    icon: Type,
     gradient: "from-primary/90 via-primary to-emerald-400",
     glowColor: "shadow-primary/25",
     orbColors: ["bg-primary", "bg-emerald-400", "bg-primary/70"],
@@ -65,7 +60,6 @@ const PROVIDER_CONFIG: Record<string, ProviderConfig> = {
 const DEFAULT_CONFIG: ProviderConfig = {
   name: "AI",
   subtitle: "Processing your request",
-  icon: Sparkles,
   gradient: "from-primary/90 via-primary to-emerald-400",
   glowColor: "shadow-primary/25",
   orbColors: ["bg-primary", "bg-emerald-400", "bg-primary/70"],
@@ -193,8 +187,6 @@ export function GenerationLoader() {
     return DEFAULT_CONFIG;
   }, [processingTool]);
 
-  const Icon = config.icon;
-
   const truncatedPrompt = useMemo(() => {
     if (!processingPrompt) return null;
     return processingPrompt.length > 80
@@ -242,7 +234,12 @@ export function GenerationLoader() {
             `shadow-lg ${config.glowColor}`
           )}
         >
-          <Icon className="h-6 w-6 text-white/80" />
+          <img
+            src="/icon.png"
+            alt="Brandex"
+            className="h-7 w-7 object-contain"
+            draggable={false}
+          />
         </div>
       </div>
 

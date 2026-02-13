@@ -2,8 +2,9 @@
 
 import { useState, useRef } from "react";
 import { useStudioStore } from "@/stores/use-studio-store";
-import { useStudioApi, StudioApiError } from "@/hooks/use-studio-api";
+import { useStudioApi } from "@/hooks/use-studio-api";
 import { useCredits } from "@/hooks/use-credits";
+import { handleError } from "@/lib/error-handler";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -60,7 +61,10 @@ export function RelightPanel() {
     try {
       const imageRes = await fetch(activeImage.url);
       if (!imageRes.ok) {
-        toast.error("Failed to load the source image. Please try selecting a different image.");
+        toast.error("Source Image Unavailable", {
+          description: "Could not load the image. It may have expired — try selecting a different one.",
+          duration: 6000,
+        });
         return;
       }
       const imageBlob = await imageRes.blob();
@@ -95,12 +99,7 @@ export function RelightPanel() {
       toast.success("Image relit successfully!");
       setPrompt("");
     } catch (error) {
-      console.error("[Relight] Error:", error);
-      if (error instanceof StudioApiError && error.requiresCredits) {
-        toast.error("Insufficient credits. Please purchase more credits.");
-      } else {
-        toast.error(error instanceof Error ? error.message : "Failed to relight image");
-      }
+      handleError(error, { operation: "relight image" });
     } finally {
       isSubmittingRef.current = false;
       setProcessing(false);

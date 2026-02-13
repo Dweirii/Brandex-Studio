@@ -11,13 +11,16 @@ import { Download, ChevronDown, Loader2, Settings, Sparkles } from "lucide-react
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useExportPresets } from "@/hooks/use-export-presets";
-import { toast } from "sonner";
+import { useStudioStore } from "@/stores/use-studio-store";
+import { handleError } from "@/lib/error-handler";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { DownloadDialog } from "./download-dialog";
+import { getImageDisplayName, sanitizeFilename } from "@/hooks/use-image-names";
 
 interface ExportMenuProps {
   imageId: string;
@@ -26,7 +29,15 @@ interface ExportMenuProps {
 
 export function ExportMenu({ imageId, className }: ExportMenuProps) {
   const { presets, isLoading, isExporting, exportImage } = useExportPresets();
+  const images = useStudioStore((s) => s.images);
   const [isOpen, setIsOpen] = useState(false);
+
+  // Download dialog state
+  const [showNameDialog, setShowNameDialog] = useState(false);
+  const [pendingPresetId, setPendingPresetId] = useState<string | null>(null);
+
+  const activeImage = images.find((img) => img.id === imageId);
+  const imageName = activeImage ? getImageDisplayName(activeImage) : "export";
 
   // Close on Escape key
   useEffect(() => {
@@ -40,15 +51,37 @@ export function ExportMenu({ imageId, className }: ExportMenuProps) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen]);
 
-  const handleExport = useCallback(async (presetId: string) => {
+  // Step 1: user picks a preset → show the name dialog
+  const handleExport = useCallback((presetId: string) => {
     setIsOpen(false);
+    setPendingPresetId(presetId);
+    setShowNameDialog(true);
+  }, []);
+
+  // Step 2a: user enters a custom name → export with that name
+  const handleNamedExport = useCallback(
+    async (filename: string) => {
+      if (!pendingPresetId) return;
+      try {
+        await exportImage(imageId, pendingPresetId, false, sanitizeFilename(filename));
+      } catch (error) {
+        handleError(error, { operation: "export image" });
+      }
+      setPendingPresetId(null);
+    },
+    [exportImage, imageId, pendingPresetId]
+  );
+
+  // Step 2b: user clicks Skip → export with default name
+  const handleSkipExport = useCallback(async () => {
+    if (!pendingPresetId) return;
     try {
-      await exportImage(imageId, presetId, false);
+      await exportImage(imageId, pendingPresetId, false);
     } catch (error) {
-      // Error already handled by the hook with toast
-      console.error("[ExportMenu] Export failed:", error);
+      handleError(error, { operation: "export image" });
     }
-  }, [exportImage, imageId]);
+    setPendingPresetId(null);
+  }, [exportImage, imageId, pendingPresetId]);
 
   const builtInPresets = presets.filter((p) => p.isBuiltIn);
   const customPresets = presets.filter((p) => !p.isBuiltIn);
@@ -167,6 +200,18 @@ export function ExportMenu({ imageId, className }: ExportMenuProps) {
           </>
         )}
       </div>
+
+      {/* Name-before-download dialog */}
+      <DownloadDialog
+        open={showNameDialog}
+        onOpenChange={setShowNameDialog}
+        defaultName={imageName}
+        format={
+          presets.find((p) => p.id === pendingPresetId)?.format || "png"
+        }
+        onDownload={handleNamedExport}
+        onSkip={handleSkipExport}
+      />
     </TooltipProvider>
   );
 }

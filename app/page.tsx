@@ -14,10 +14,13 @@ import { ComparisonView } from "@/components/studio/comparison-view";
 import { BackgroundBeams } from "@/components/ui/beams";
 import { useStudioStore } from "@/stores/use-studio-store";
 import { useStudioApi } from "@/hooks/use-studio-api";
+import { WelcomeGuide, useWelcomeGuide } from "@/components/studio/welcome-guide";
+import { handleError } from "@/lib/error-handler";
 import { toast } from "sonner";
 
 export default function StudioPage() {
   const { studioRequest, studioUpload } = useStudioApi();
+  const { showGuide, setShowGuide, openGuide } = useWelcomeGuide();
   const {
     view,
     projectId,
@@ -65,7 +68,7 @@ export default function StudioPage() {
           setProjects(data);
         }
       } catch (error) {
-        console.error("[Studio] Failed to load projects:", error);
+        handleError(error, { operation: "load projects" });
       } finally {
         if (!cancelled) setLoadingProjects(false);
       }
@@ -117,8 +120,6 @@ export default function StudioPage() {
 
         toast.success("Image uploaded! Select a tool to get started.");
       } catch (error) {
-        console.error("[Upload] Error:", error);
-        
         // Fallback: if server upload endpoint doesn't exist yet, use local preview
         // This ensures the app still works while the upload endpoint is being built
         try {
@@ -133,7 +134,7 @@ export default function StudioPage() {
           });
           toast.success("Image loaded locally. Select a tool to get started.");
         } catch (fallbackError) {
-          toast.error("Failed to upload image. Please try again.");
+          handleError(error, { operation: "upload image" });
         }
       } finally {
         setProcessing(false);
@@ -153,7 +154,8 @@ export default function StudioPage() {
       {/* Animated background beams */}
       <BackgroundBeams className="opacity-30" />
       
-      <StudioHeader />
+      <StudioHeader onOpenGuide={openGuide} />
+      <WelcomeGuide open={showGuide} onOpenChange={setShowGuide} />
 
       <div className="flex flex-1 overflow-hidden relative z-10">
         <ToolSidebar />

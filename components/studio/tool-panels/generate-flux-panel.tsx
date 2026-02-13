@@ -2,8 +2,9 @@
 
 import { useState, useRef } from "react";
 import { useStudioStore } from "@/stores/use-studio-store";
-import { useStudioApi, StudioApiError } from "@/hooks/use-studio-api";
+import { useStudioApi } from "@/hooks/use-studio-api";
 import { useCredits } from "@/hooks/use-credits";
+import { handleError } from "@/lib/error-handler";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -82,12 +83,7 @@ export function GenerateFluxPanel() {
       toast.success("Image generated successfully!");
       setPrompt("");
     } catch (error) {
-      console.error("[FLUX Generate] Error:", error);
-      if (error instanceof StudioApiError && error.requiresCredits) {
-        toast.error("Insufficient credits. Please purchase more credits.");
-      } else {
-        toast.error(error instanceof Error ? error.message : "Failed to generate image");
-      }
+      handleError(error, { operation: "generate image" });
     } finally {
       isSubmittingRef.current = false;
       setProcessing(false);

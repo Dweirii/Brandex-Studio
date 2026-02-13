@@ -2,8 +2,9 @@
 
 import { useState, useRef } from "react";
 import { useStudioStore } from "@/stores/use-studio-store";
-import { useStudioApi, StudioApiError } from "@/hooks/use-studio-api";
+import { useStudioApi } from "@/hooks/use-studio-api";
 import { useCredits } from "@/hooks/use-credits";
+import { handleError } from "@/lib/error-handler";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -46,7 +47,10 @@ export function SkinEnhancePanel() {
     try {
       const imageRes = await fetch(activeImage.url);
       if (!imageRes.ok) {
-        toast.error("Failed to load the source image. Please try selecting a different image.");
+        toast.error("Source Image Unavailable", {
+          description: "Could not load the image. It may have expired — try selecting a different one.",
+          duration: 6000,
+        });
         return;
       }
       const imageBlob = await imageRes.blob();
@@ -79,12 +83,7 @@ export function SkinEnhancePanel() {
       setBalanceFromResponse(result.newBalance);
       toast.success("Skin enhanced successfully!");
     } catch (error) {
-      console.error("[Skin Enhance] Error:", error);
-      if (error instanceof StudioApiError && error.requiresCredits) {
-        toast.error("Insufficient credits. Please purchase more credits.");
-      } else {
-        toast.error(error instanceof Error ? error.message : "Failed to enhance skin");
-      }
+      handleError(error, { operation: "enhance skin" });
     } finally {
       isSubmittingRef.current = false;
       setProcessing(false);

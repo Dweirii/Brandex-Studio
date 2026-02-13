@@ -9,6 +9,9 @@ import { GenerateTypographyPanel } from "./tool-panels/generate-typography-panel
 import { UpscalePanel } from "./tool-panels/upscale-panel";
 import { RelightPanel } from "./tool-panels/relight-panel";
 import { SkinEnhancePanel } from "./tool-panels/skin-enhance-panel";
+import { ColorPickerPanel } from "./tool-panels/color-picker-panel";
+import { AdjustmentsPanel } from "./tool-panels/adjustments-panel";
+import { AiEditPanel } from "./tool-panels/ai-edit-panel";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useEffect } from "react";
@@ -52,6 +55,7 @@ export function ToolPanel() {
       </div>
       <div className="relative p-5 overflow-y-auto max-h-[calc(100vh-14rem)] scrollbar-thin">
         {selectedTool === "remove_bg" && <RemoveBgPanel />}
+        {selectedTool === "ai_edit" && <AiEditPanel />}
         {selectedTool === "ai_background" && <AiBackgroundPanel />}
         {selectedTool === "generate_flux" && <GenerateFluxPanel />}
         {selectedTool === "generate_gemini" && <GenerateGeminiPanel />}
@@ -59,6 +63,8 @@ export function ToolPanel() {
         {selectedTool === "upscale" && <UpscalePanel />}
         {selectedTool === "relight" && <RelightPanel />}
         {selectedTool === "skin_enhance" && <SkinEnhancePanel />}
+        {selectedTool === "color_picker" && <ColorPickerPanel />}
+        {selectedTool === "adjustments" && <AdjustmentsPanel />}
       </div>
     </div>
   );

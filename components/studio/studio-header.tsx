@@ -1,7 +1,7 @@
 "use client";
 
 import { UserButton } from "@clerk/nextjs";
-import { ArrowLeft, Coins, Palette, History, GitCompare } from "lucide-react";
+import { ArrowLeft, Coins, Palette, History, GitCompare, HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCredits } from "@/hooks/use-credits";
@@ -22,7 +22,11 @@ const backgrounds = [
   { id: "black", label: "Black", icon: "⬛" },
 ] as const;
 
-export function StudioHeader() {
+interface StudioHeaderProps {
+  onOpenGuide?: () => void;
+}
+
+export function StudioHeader({ onOpenGuide }: StudioHeaderProps) {
   const { balance, isLoading } = useCredits();
   const projectName = useStudioStore((s) => s.projectName);
   const closeProject = useStudioStore((s) => s.closeProject);
@@ -150,6 +154,30 @@ export function StudioHeader() {
         </TooltipProvider>
 
         <div className="h-4 w-px bg-gradient-to-b from-transparent via-white/[0.12] to-transparent" />
+
+        {/* Help / Guide button */}
+        {onOpenGuide && (
+          <TooltipProvider delayDuration={0}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={onOpenGuide}
+                  className="h-8 w-8 rounded-lg text-white/40 hover:text-white hover:bg-white/[0.08] transition-all duration-300 hover:scale-105"
+                >
+                  <HelpCircle className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent
+                side="bottom"
+                className="bg-[#141517] backdrop-blur-2xl shadow-[0_0_10px_0_rgba(0,0,0,0.6)]"
+              >
+                <p className="text-xs font-semibold text-white">Guide</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
 
         <div className="group/credits flex items-center gap-2 rounded-xl bg-white/[0.06] px-3.5 py-2 transition-all duration-300 hover:shadow-[0_0_8px_0_rgba(255,184,0,0.3)] hover:scale-[1.02]">
           <Coins className="h-3.5 w-3.5 text-amber-400/90 transition-all duration-300 group-hover/credits:rotate-12 group-hover/credits:scale-110" />

@@ -8,6 +8,7 @@
 import { Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
+import { handleError } from "@/lib/error-handler";
 import { toast } from "sonner";
 
 interface FavoriteButtonProps {
@@ -35,7 +36,7 @@ export function FavoriteButton({
       await onToggle(imageId, !isFavorite);
       toast.success(isFavorite ? "Removed from favorites" : "Added to favorites");
     } catch (error) {
-      toast.error("Failed to update favorite");
+      handleError(error, { operation: "update favorite" });
     } finally {
       setIsLoading(false);
     }

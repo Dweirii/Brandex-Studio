@@ -22,6 +22,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { BackgroundBeams } from "@/components/ui/beams";
+import { handleError } from "@/lib/error-handler";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -247,8 +248,7 @@ export function ProjectBrowser() {
       openProject(project.id, project.name, []);
       toast.success("Project created!");
     } catch (error) {
-      console.error("[ProjectBrowser] Create error:", error);
-      toast.error("Failed to create project");
+      handleError(error, { operation: "create project" });
     } finally {
       setIsCreating(false);
     }
@@ -265,8 +265,7 @@ export function ProjectBrowser() {
       }>(`/projects/${project.id}`);
       openProject(data.id, data.name, data.images || []);
     } catch (error) {
-      console.error("[ProjectBrowser] Open error:", error);
-      toast.error("Failed to open project");
+      handleError(error, { operation: "open project" });
     } finally {
       setLoadingProjects(false);
     }
@@ -282,9 +281,8 @@ export function ProjectBrowser() {
         body: JSON.stringify({ name: name.slice(0, 100) }),
       });
     } catch (error) {
-      console.error("[ProjectBrowser] Rename error:", error);
       renameProject(id, oldName); // Rollback
-      toast.error("Failed to rename project");
+      handleError(error, { operation: "rename project" });
     }
   };
 
@@ -296,11 +294,10 @@ export function ProjectBrowser() {
       await studioRequest(`/projects/${id}`, { method: "DELETE" });
       toast.success("Project deleted");
     } catch (error) {
-      console.error("[ProjectBrowser] Delete error:", error);
       if (deletedProject) {
         setProjects([...projects.filter((p) => p.id !== id), deletedProject]);
       }
-      toast.error("Failed to delete project");
+      handleError(error, { operation: "delete project" });
     }
   };
 

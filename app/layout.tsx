@@ -54,7 +54,18 @@ export default function RootLayout({
             disableTransitionOnChange
           >
             {children}
-            <Toaster richColors position="top-right" />
+            <Toaster
+              richColors
+              position="top-right"
+              closeButton
+              toastOptions={{
+                duration: 4000,
+                classNames: {
+                  toast: "!shadow-xl",
+                  closeButton: "!bg-transparent !border-0 !text-current !opacity-40 hover:!opacity-100",
+                },
+              }}
+            />
           </ThemeProvider>
         </body>
       </html>

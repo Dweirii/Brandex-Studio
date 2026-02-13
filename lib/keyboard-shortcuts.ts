@@ -77,6 +77,16 @@ export const KEYBOARD_SHORTCUTS: KeyboardShortcut[] = [
     category: "Actions",
   },
   {
+    key: "P",
+    description: "Toggle color picker",
+    category: "Actions",
+  },
+  {
+    key: "A",
+    description: "Toggle quick adjustments",
+    category: "Actions",
+  },
+  {
     key: "D",
     description: "Download active image",
     category: "Actions",

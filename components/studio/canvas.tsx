@@ -3,7 +3,7 @@
 import { useStudioStore } from "@/stores/use-studio-store";
 import { Coins, Upload, Wand2, ZoomIn, ZoomOut, Maximize2, Info, Minimize2, ArrowLeftRight } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -15,7 +15,22 @@ import { useFullscreen } from "@/hooks/use-fullscreen";
 import { CanvasGrid, type GridType } from "./canvas-grid";
 import { GenerationLoader } from "./generation-loader";
 import { useStudioApi } from "@/hooks/use-studio-api";
+import { handleError } from "@/lib/error-handler";
 import { toast } from "sonner";
+import {
+  useColorPickerStore,
+  loadImageToCanvas,
+  getPixelColor,
+  createSampledColor,
+  drawMagnifier,
+} from "@/hooks/use-color-picker";
+import {
+  useAdjustmentsStore,
+  hasAdjustmentChanges,
+  buildCSSFilter,
+} from "@/hooks/use-image-adjustments";
+import { useMaskPainterStore } from "@/hooks/use-mask-painter";
+import { MaskCanvas } from "./mask-canvas";
 
 const typeLabels: Record<string, string> = {
   original: "Original",
@@ -52,6 +67,8 @@ export function Canvas() {
   const setShowHistory = useStudioStore((s) => s.setShowHistory);
   const showComparison = useStudioStore((s) => s.showComparison);
   const setShowComparison = useStudioStore((s) => s.setShowComparison);
+  const selectedTool = useStudioStore((s) => s.selectedTool);
+  const setTool = useStudioStore((s) => s.setTool);
 
   const activeImage = images.find((img) => img.id === activeImageId);
 
@@ -69,11 +86,76 @@ export function Canvas() {
   const containerRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
 
+  // ── AI Edit / Mask Painting State ───────────────────────────────────────
+  const isAiEditing = selectedTool === "ai_edit";
+  const maskHasPaint = useMaskPainterStore((s) => s.hasMask);
+
+  // ── Color Picker / Eyedropper State ──────────────────────────────────────
+  const isColorPicking = selectedTool === "color_picker";
+  const sourceCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const magnifierCanvasRef = useRef<HTMLCanvasElement>(null);
+  const isLoadingSourceRef = useRef(false);
+  const [eyedropperData, setEyedropperData] = useState<{
+    screenX: number;
+    screenY: number;
+    color: { hex: string };
+  } | null>(null);
+
+  // ── Image Adjustments State ──────────────────────────────────────────────
+  const adjBrightness = useAdjustmentsStore((s) => s.brightness);
+  const adjContrast = useAdjustmentsStore((s) => s.contrast);
+  const adjSaturation = useAdjustmentsStore((s) => s.saturation);
+  const adjTargetImageId = useAdjustmentsStore((s) => s.targetImageId);
+  const isAdjusting = selectedTool === "adjustments";
+  const adjValues = { brightness: adjBrightness, contrast: adjContrast, saturation: adjSaturation };
+  const adjHasChanges = hasAdjustmentChanges(adjValues);
+  const adjCSSFilter = adjHasChanges ? buildCSSFilter(adjValues) : "none";
+
   // Reset zoom and pan when image changes
   useEffect(() => {
     setZoom(1);
     setPan({ x: 0, y: 0 });
   }, [activeImageId]);
+
+  // ── Eyedropper: load image into offscreen canvas for pixel sampling ────
+  useEffect(() => {
+    if (!isColorPicking || !activeImage) {
+      sourceCanvasRef.current = null;
+      setEyedropperData(null);
+      return;
+    }
+
+    if (isLoadingSourceRef.current) return;
+    isLoadingSourceRef.current = true;
+
+    let cancelled = false;
+    loadImageToCanvas(activeImage.url)
+      .then((canvas) => {
+        if (!cancelled) sourceCanvasRef.current = canvas;
+      })
+      .catch((err) => {
+        console.error("[Eyedropper] Failed to load image:", err);
+      })
+      .finally(() => {
+        isLoadingSourceRef.current = false;
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isColorPicking, activeImage]);
+
+  // Clear dominant colors when the active image changes
+  useEffect(() => {
+    useColorPickerStore.getState().setDominantColors([]);
+  }, [activeImageId]);
+
+  // Reset adjustments when switching to a different image
+  useEffect(() => {
+    if (activeImageId && activeImageId !== adjTargetImageId) {
+      useAdjustmentsStore.getState().setTargetImageId(activeImageId);
+    }
+  }, [activeImageId, adjTargetImageId]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -140,12 +222,41 @@ export function Canvas() {
             setShowComparison(!showComparison);
           }
           break;
+        case "p":
+        case "P":
+          e.preventDefault();
+          if (activeImage) {
+            setTool(selectedTool === "color_picker" ? null : "color_picker");
+          }
+          break;
+        case "a":
+          e.preventDefault();
+          if (activeImage) {
+            setTool(selectedTool === "adjustments" ? null : "adjustments");
+          }
+          break;
+        case "[":
+          if (isAiEditing) {
+            e.preventDefault();
+            useMaskPainterStore.getState().setBrushSize(
+              Math.max(5, useMaskPainterStore.getState().brushSize - 5)
+            );
+          }
+          break;
+        case "]":
+          if (isAiEditing) {
+            e.preventDefault();
+            useMaskPainterStore.getState().setBrushSize(
+              Math.min(100, useMaskPainterStore.getState().brushSize + 5)
+            );
+          }
+          break;
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [activeImageId, images, zoom, pan, showInfo, toggleFullscreen, gridOverlay, activeImage, showHistory, showComparison, setShowHistory, setShowComparison]);
+  }, [activeImageId, images, zoom, pan, showInfo, toggleFullscreen, gridOverlay, activeImage, showHistory, showComparison, setShowHistory, setShowComparison, selectedTool, setTool]);
 
   // Cycle through grid overlays
   const cycleGridOverlay = () => {
@@ -170,7 +281,7 @@ export function Canvas() {
       toast.success(newFavoriteState ? "Added to favorites" : "Removed from favorites");
     } catch (error) {
       toggleFavorite(activeImage.id); // Revert
-      toast.error("Failed to update favorite");
+      handleError(error, { operation: "update favorite" });
     }
   };
 
@@ -206,7 +317,7 @@ export function Canvas() {
     };
   }, [activeImage]);
 
-  // Handle zoom with mouse wheel
+  // Handle zoom with mouse wheel (always available, including in color picker mode)
   const handleWheel = (e: React.WheelEvent) => {
     e.preventDefault();
     const delta = e.deltaY * -0.001;
@@ -214,8 +325,9 @@ export function Canvas() {
     setZoom(newZoom);
   };
 
-  // Handle pan with drag
+  // Handle pan with drag (disabled in color picker mode)
   const handleMouseDown = (e: React.MouseEvent) => {
+    if (isColorPicking || isAiEditing) return;
     if (zoom > 1) {
       setIsDragging(true);
       setDragStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
@@ -223,6 +335,10 @@ export function Canvas() {
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
+    if (isColorPicking) {
+      handleEyedropperMove(e);
+      return;
+    }
     if (isDragging) {
       setPan({
         x: e.clientX - dragStart.x,
@@ -233,6 +349,107 @@ export function Canvas() {
 
   const handleMouseUp = () => {
     setIsDragging(false);
+  };
+
+  const handleMouseLeaveContainer = () => {
+    if (isColorPicking) {
+      setEyedropperData(null);
+      useColorPickerStore.getState().setHoverColor(null);
+    }
+    setIsDragging(false);
+  };
+
+  // ── Eyedropper Handlers ────────────────────────────────────────────────
+
+  const handleEyedropperMove = useCallback(
+    (e: React.MouseEvent) => {
+      const imgEl = imageRef.current;
+      const source = sourceCanvasRef.current;
+      if (!imgEl || !source) {
+        setEyedropperData(null);
+        useColorPickerStore.getState().setHoverColor(null);
+        return;
+      }
+
+      const rect = imgEl.getBoundingClientRect();
+      const relX = (e.clientX - rect.left) / rect.width;
+      const relY = (e.clientY - rect.top) / rect.height;
+
+      // Outside the image bounds
+      if (relX < 0 || relX > 1 || relY < 0 || relY > 1) {
+        setEyedropperData(null);
+        useColorPickerStore.getState().setHoverColor(null);
+        return;
+      }
+
+      const pixelX = Math.floor(relX * source.width);
+      const pixelY = Math.floor(relY * source.height);
+
+      const rgb = getPixelColor(source, pixelX, pixelY);
+      const color = createSampledColor(rgb.r, rgb.g, rgb.b, {
+        x: relX,
+        y: relY,
+      });
+
+      // Draw magnifier (imperative, no frame delay)
+      drawMagnifier(magnifierCanvasRef.current, source, pixelX, pixelY);
+
+      setEyedropperData({
+        screenX: e.clientX,
+        screenY: e.clientY,
+        color: { hex: color.hex },
+      });
+      useColorPickerStore.getState().setHoverColor(color);
+    },
+    []
+  );
+
+  const handleCanvasClick = useCallback(
+    (e: React.MouseEvent) => {
+      if (!isColorPicking) return;
+
+      const imgEl = imageRef.current;
+      const source = sourceCanvasRef.current;
+      if (!imgEl || !source) return;
+
+      const rect = imgEl.getBoundingClientRect();
+      const relX = (e.clientX - rect.left) / rect.width;
+      const relY = (e.clientY - rect.top) / rect.height;
+
+      if (relX < 0 || relX > 1 || relY < 0 || relY > 1) return;
+
+      const pixelX = Math.floor(relX * source.width);
+      const pixelY = Math.floor(relY * source.height);
+
+      const rgb = getPixelColor(source, pixelX, pixelY);
+      const color = createSampledColor(rgb.r, rgb.g, rgb.b, {
+        x: relX,
+        y: relY,
+      });
+
+      useColorPickerStore.getState().addColor(color);
+      toast.success(`Sampled ${color.hex}`);
+    },
+    [isColorPicking]
+  );
+
+  /** Smart positioning: keep the magnifier within the viewport. */
+  const getMagnifierPosition = () => {
+    if (!eyedropperData) return { left: -9999, top: -9999 };
+    const offset = 24;
+    const magW = 140;
+    const magH = 196;
+    let left = eyedropperData.screenX + offset;
+    let top = eyedropperData.screenY - magH / 2;
+
+    if (left + magW > window.innerWidth - 8) {
+      left = eyedropperData.screenX - offset - magW;
+    }
+    if (top < 8) top = 8;
+    if (top + magH > window.innerHeight - 8) {
+      top = window.innerHeight - magH - 8;
+    }
+    return { left, top };
   };
 
   // Quick actions
@@ -291,13 +508,22 @@ export function Canvas() {
       className={cn(
         "relative flex flex-1 items-center justify-center overflow-hidden p-12 animate-in fade-in zoom-in-95 duration-700 transition-colors duration-300",
         getBackgroundStyle(),
-        zoom > 1 && isDragging ? "cursor-grabbing" : zoom > 1 ? "cursor-grab" : "cursor-default"
+        isAiEditing
+          ? "cursor-none"
+          : isColorPicking
+          ? "cursor-crosshair"
+          : zoom > 1 && isDragging
+          ? "cursor-grabbing"
+          : zoom > 1
+          ? "cursor-grab"
+          : "cursor-default"
       )}
       onWheel={handleWheel}
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseUp}
+      onMouseLeave={handleMouseLeaveContainer}
+      onClick={handleCanvasClick}
     >
       {/* Professional checkerboard background for transparent mode */}
       {canvasBackground === "transparent" && (
@@ -319,19 +545,32 @@ export function Canvas() {
           transform: `translate(${pan.x}px, ${pan.y}px)`,
         }}
       >
-        <img
-          ref={imageRef}
-          src={activeImage.url}
-          alt="Studio canvas"
-          className="relative max-h-full max-w-full object-contain shadow-[0_0_20px_0_rgba(0,0,0,0.5)] transition-transform duration-200"
-          style={{
-            transform: `scale(${zoom})`,
-          }}
-          draggable={false}
-          onError={() => {
-            toast.error("Failed to load image. The URL may have expired.");
-          }}
-        />
+        <div
+          className="relative max-h-full max-w-full"
+          style={{ transform: `scale(${zoom})`, display: "inline-block" }}
+        >
+          <img
+            ref={imageRef}
+            src={activeImage.url}
+            alt="Studio canvas"
+            className="max-h-full max-w-full object-contain shadow-[0_0_20px_0_rgba(0,0,0,0.5)] transition-all duration-200"
+            style={{
+              filter: isAdjusting && adjHasChanges ? adjCSSFilter : undefined,
+            }}
+            draggable={false}
+            onError={() => {
+              toast.error("Image Unavailable", {
+                description: "The image could not be loaded. The URL may have expired — try selecting a different image.",
+                duration: 6000,
+              });
+            }}
+          />
+
+          {/* Mask painting overlay for AI Edit tool */}
+          {isAiEditing && (
+            <MaskCanvas imageRef={imageRef} zoom={zoom} />
+          )}
+        </div>
         
         {/* Grid Overlay */}
         <CanvasGrid type={gridOverlay} />
@@ -608,6 +847,82 @@ export function Canvas() {
           </>
         )}
       </div>
+
+      {/* ── Eyedropper Magnifier ─────────────────────────────────────────── */}
+      <div
+        className="fixed z-100 pointer-events-none"
+        style={{
+          visibility:
+            isColorPicking && eyedropperData ? "visible" : "hidden",
+          ...getMagnifierPosition(),
+        }}
+      >
+        <div className="flex flex-col items-center gap-2">
+          {/* Magnified pixel ring */}
+          <div className="rounded-full shadow-[0_0_24px_0_rgba(0,0,0,0.8)] ring-2 ring-white/30 overflow-hidden">
+            <canvas
+              ref={magnifierCanvasRef}
+              width={140}
+              height={140}
+              style={{ width: 140, height: 140, display: "block" }}
+            />
+          </div>
+          {/* Color label */}
+          {eyedropperData?.color && (
+            <div className="flex items-center gap-2 rounded-lg bg-[#141517]/95 backdrop-blur-sm px-3 py-1.5 shadow-[0_0_10px_0_rgba(0,0,0,0.6)]">
+              <div
+                className="h-4 w-4 rounded-sm ring-1 ring-white/20 shadow-inner"
+                style={{ backgroundColor: eyedropperData.color.hex }}
+              />
+              <span className="font-mono text-xs font-bold text-white/90 tracking-wide">
+                {eyedropperData.color.hex}
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* AI Edit mode indicator */}
+      {isAiEditing && !showInfo && (
+        <div className="absolute top-6 left-6 rounded-lg bg-[#141517] backdrop-blur-2xl px-3 py-2 shadow-[0_0_10px_0_rgba(0,0,0,0.6)] animate-in slide-in-from-left-5 duration-300">
+          <div className="flex items-center gap-2">
+            <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+            <span className="text-xs font-semibold text-white/70">
+              Paint over the area to edit
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* Color picker mode indicator — hide when info panel is open to avoid overlap */}
+      {isColorPicking && !showInfo && (
+        <div className="absolute top-6 left-6 rounded-lg bg-[#141517] backdrop-blur-2xl px-3 py-2 shadow-[0_0_10px_0_rgba(0,0,0,0.6)] animate-in slide-in-from-left-5 duration-300">
+          <div className="flex items-center gap-2">
+            <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+            <span className="text-xs font-semibold text-white/70">
+              Color Picker Active
+            </span>
+            <kbd className="px-1.5 py-0.5 rounded bg-white/10 font-mono text-[9px] text-white/40">
+              P
+            </kbd>
+          </div>
+        </div>
+      )}
+
+      {/* Adjustments active indicator */}
+      {isAdjusting && adjHasChanges && !showInfo && !isColorPicking && (
+        <div className="absolute top-6 left-6 rounded-lg bg-[#141517] backdrop-blur-2xl px-3 py-2 shadow-[0_0_10px_0_rgba(0,0,0,0.6)] animate-in slide-in-from-left-5 duration-300">
+          <div className="flex items-center gap-2">
+            <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+            <span className="text-xs font-semibold text-white/70">
+              Adjustments Preview
+            </span>
+            <kbd className="px-1.5 py-0.5 rounded bg-white/10 font-mono text-[9px] text-white/40">
+              A
+            </kbd>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { History, ArrowRight, X, Coins } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { handleError } from "@/lib/error-handler";
 import { toast } from "sonner";
 
 interface ImageHistoryPanelProps {
@@ -37,8 +38,7 @@ export function ImageHistoryPanel({ imageId, onClose }: ImageHistoryPanelProps) 
 
   useEffect(() => {
     fetchHistory(imageId).catch((error) => {
-      console.error("Failed to load history:", error);
-      toast.error("Failed to load version history");
+      handleError(error, { operation: "load version history" });
     });
   }, [imageId, fetchHistory]);
 

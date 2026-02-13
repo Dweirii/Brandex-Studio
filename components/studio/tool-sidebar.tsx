@@ -3,12 +3,15 @@
 import {
   Eraser,
   ImagePlus,
+  Paintbrush,
   Wand2,
   ZoomIn,
   Sun,
   Sparkles,
   Type,
   BrainCircuit,
+  Pipette,
+  SlidersHorizontal,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -25,12 +28,15 @@ interface ToolItem {
   id:
     | "remove_bg"
     | "ai_background"
+    | "ai_edit"
     | "generate_flux"
     | "generate_gemini"
     | "generate_typography"
     | "upscale"
     | "relight"
-    | "skin_enhance";
+    | "skin_enhance"
+    | "color_picker"
+    | "adjustments";
   label: string;
   icon: React.ReactNode;
   credits: number;
@@ -52,6 +58,14 @@ const toolGroups: ToolGroup[] = [
         label: "Remove BG",
         icon: <Eraser className="h-4 w-4" />,
         credits: 5,
+        enabled: true,
+        requiresImage: true,
+      },
+      {
+        id: "ai_edit",
+        label: "AI Edit",
+        icon: <Paintbrush className="h-4 w-4" />,
+        credits: 25,
         enabled: true,
         requiresImage: true,
       },
@@ -123,6 +137,27 @@ const toolGroups: ToolGroup[] = [
       },
     ],
   },
+  {
+    label: "Utilities",
+    tools: [
+      {
+        id: "color_picker",
+        label: "Color Picker",
+        icon: <Pipette className="h-4 w-4" />,
+        credits: 0,
+        enabled: true,
+        requiresImage: true,
+      },
+      {
+        id: "adjustments",
+        label: "Adjustments",
+        icon: <SlidersHorizontal className="h-4 w-4" />,
+        credits: 0,
+        enabled: true,
+        requiresImage: true,
+      },
+    ],
+  },
 ];
 
 export function ToolSidebar() {
@@ -174,7 +209,7 @@ export function ToolSidebar() {
                 "text-[10px] font-medium leading-tight transition-colors duration-300 tabular-nums",
                 isActive ? "text-primary/70" : "text-white/30 group-hover/tool:text-white/40"
               )}>
-                {tool.credits} cr
+                {tool.credits === 0 ? "Free" : `${tool.credits} cr`}
               </span>
             </div>
           </button>
@@ -184,7 +219,7 @@ export function ToolSidebar() {
           className="bg-[#141517] backdrop-blur-2xl shadow-[0_0_10px_0_rgba(0,0,0,0.6)]"
         >
           <p className="text-xs font-semibold text-white">{tool.label}</p>
-          <p className="text-xs text-white/50 mt-0.5">{tool.credits} credits</p>
+          <p className="text-xs text-white/50 mt-0.5">{tool.credits === 0 ? "Free tool" : `${tool.credits} credits`}</p>
           {tool.requiresImage && !activeImageId && (
             <p className="text-xs text-amber-400/70 mt-1 font-medium">Upload an image first</p>
           )}

@@ -5,8 +5,9 @@ import { Eraser, Coins } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useStudioStore } from "@/stores/use-studio-store";
-import { useStudioApi, StudioApiError } from "@/hooks/use-studio-api";
+import { useStudioApi } from "@/hooks/use-studio-api";
 import { useCredits } from "@/hooks/use-credits";
+import { handleError } from "@/lib/error-handler";
 import { toast } from "sonner";
 
 const COST = 5;
@@ -37,7 +38,10 @@ export function RemoveBgPanel() {
       // Fetch the active image as a blob
       const imageRes = await fetch(activeImage.url);
       if (!imageRes.ok) {
-        toast.error("Failed to load the source image. Please try selecting a different image.");
+        toast.error("Source Image Unavailable", {
+          description: "Could not load the image. It may have expired — try selecting a different one.",
+          duration: 6000,
+        });
         return;
       }
       const imageBlob = await imageRes.blob();
@@ -67,14 +71,7 @@ export function RemoveBgPanel() {
       setBalanceFromResponse(result.newBalance);
       toast.success("Background removed successfully!");
     } catch (error) {
-      console.error("[RemoveBg] Error:", error);
-      if (error instanceof StudioApiError && error.requiresCredits) {
-        toast.error("Insufficient credits. Please purchase more credits.");
-      } else {
-        toast.error(
-          error instanceof Error ? error.message : "Failed to remove background"
-        );
-      }
+      handleError(error, { operation: "remove background" });
     } finally {
       isSubmittingRef.current = false;
       setProcessing(false);

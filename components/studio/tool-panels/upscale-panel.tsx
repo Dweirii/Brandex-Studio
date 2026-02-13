@@ -2,8 +2,9 @@
 
 import { useState, useRef } from "react";
 import { useStudioStore } from "@/stores/use-studio-store";
-import { useStudioApi, StudioApiError } from "@/hooks/use-studio-api";
+import { useStudioApi } from "@/hooks/use-studio-api";
 import { useCredits } from "@/hooks/use-credits";
+import { handleError } from "@/lib/error-handler";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -23,19 +24,6 @@ export function UpscalePanel() {
   const activeImage = images.find((img) => img.id === activeImageId);
   const canAfford = balance >= creditCost;
 
-  /**
-   * Load image dimensions from a URL. Returns { width, height }.
-   */
-  const getImageDimensions = (url: string): Promise<{ width: number; height: number }> =>
-    new Promise((resolve, reject) => {
-      const img = new Image();
-      img.onload = () => resolve({ width: img.naturalWidth, height: img.naturalHeight });
-      img.onerror = () => reject(new Error("Failed to load image dimensions"));
-      img.src = url;
-    });
-
-  const FREEPIK_MAX_OUTPUT_PIXELS = 25_300_000;
-
   const handleUpscale = async () => {
     if (isSubmittingRef.current) return;
     isSubmittingRef.current = true;
@@ -52,35 +40,15 @@ export function UpscalePanel() {
       return;
     }
 
-    // Pre-validate image dimensions against Freepik's pixel limit
-    try {
-      const { width, height } = await getImageDimensions(activeImage.url);
-      const outputPixels = (width * scaleFactor) * (height * scaleFactor);
-
-      if (outputPixels > FREEPIK_MAX_OUTPUT_PIXELS) {
-        const maxInput = Math.floor(Math.sqrt(FREEPIK_MAX_OUTPUT_PIXELS / (scaleFactor * scaleFactor)));
-        if (scaleFactor === 4) {
-          toast.error(
-            `Image too large for 4x upscale (${width}x${height} → ${width * 4}x${height * 4}). Try 2x instead.`
-          );
-        } else {
-          toast.error(
-            `Image too large for ${scaleFactor}x upscale (${width}x${height}). Max ~${maxInput}x${maxInput} pixels.`
-          );
-        }
-        isSubmittingRef.current = false;
-        return;
-      }
-    } catch {
-      // If dimension check fails, proceed anyway — backend will catch it
-    }
-
     setProcessing(true, `Upscaling image (${mode} ${scaleFactor}x)...`);
 
     try {
       const imageRes = await fetch(activeImage.url);
       if (!imageRes.ok) {
-        toast.error("Failed to load the source image. Please try selecting a different image.");
+        toast.error("Source Image Unavailable", {
+          description: "Could not load the image. It may have expired — try selecting a different one.",
+          duration: 6000,
+        });
         return;
       }
       const imageBlob = await imageRes.blob();
@@ -112,12 +80,7 @@ export function UpscalePanel() {
       setBalanceFromResponse(result.newBalance);
       toast.success("Image upscaled successfully!");
     } catch (error) {
-      console.error("[Upscale] Error:", error);
-      if (error instanceof StudioApiError && error.requiresCredits) {
-        toast.error("Insufficient credits. Please purchase more credits.");
-      } else {
-        toast.error(error instanceof Error ? error.message : "Failed to upscale image");
-      }
+      handleError(error, { operation: "upscale image" });
     } finally {
       isSubmittingRef.current = false;
       setProcessing(false);
@@ -133,7 +96,7 @@ export function UpscalePanel() {
           <h3 className="font-semibold">Upscale Image</h3>
         </div>
         <p className="text-xs text-muted-foreground">
-          Enhance resolution and quality with AI
+          Clarity AI — #1 upscaler with 26M+ runs
         </p>
       </div>
 
@@ -148,7 +111,7 @@ export function UpscalePanel() {
                 Precision
               </Label>
               <p className="text-xs text-muted-foreground">
-                Preserves exact details (20 credits)
+                High fidelity, preserves exact details (20 credits)
               </p>
             </div>
           </div>
@@ -160,7 +123,7 @@ export function UpscalePanel() {
                 Creative
               </Label>
               <p className="text-xs text-muted-foreground">
-                Enhances & adds details (30 credits)
+                AI-enhanced details & sharpening (30 credits)
               </p>
             </div>
           </div>
