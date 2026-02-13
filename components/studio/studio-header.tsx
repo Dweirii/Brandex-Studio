@@ -43,9 +43,9 @@ export function StudioHeader({ onOpenGuide }: StudioHeaderProps) {
   const hasParent = activeImage?.parentId != null;
 
   return (
-    <header className="group/header flex h-14 shrink-0 items-center justify-between bg-[#141517] shadow-[0_0_10px_0_rgba(0,0,0,0.6)] backdrop-blur-2xl px-4 relative">
+    <header className="group/header flex h-14 shrink-0 items-center justify-between bg-[#141517] shadow-[0_0_10px_0_rgba(0,0,0,0.6)] backdrop-blur-2xl px-2 lg:px-4 relative">
       {/* Left: Back + Logo + Project Name */}
-      <div className="flex items-center gap-3 relative z-10">
+      <div className="flex items-center gap-2 lg:gap-3 relative z-10">
         <Button
           variant="ghost"
           size="icon"
@@ -61,8 +61,8 @@ export function StudioHeader({ onOpenGuide }: StudioHeaderProps) {
 
         {projectName && (
           <>
-            <div className="h-3 w-px bg-gradient-to-b from-transparent via-white/[0.12] to-transparent" />
-            <span className="text-xs font-medium text-white/50 max-w-[200px] truncate transition-colors duration-300 hover:text-white/70">
+            <div className="hidden lg:block h-3 w-px bg-gradient-to-b from-transparent via-white/[0.12] to-transparent" />
+            <span className="hidden lg:inline text-xs font-medium text-white/50 max-w-[200px] truncate transition-colors duration-300 hover:text-white/70">
               {projectName}
             </span>
           </>
@@ -70,7 +70,7 @@ export function StudioHeader({ onOpenGuide }: StudioHeaderProps) {
       </div>
 
       {/* Right: Quick Actions + Background Toggle + Credits + User */}
-      <div className="flex items-center gap-3 relative z-10">
+      <div className="flex items-center gap-1.5 lg:gap-3 relative z-10">
         {/* Quick View Actions */}
         {activeImage && (
           <TooltipProvider delayDuration={0}>

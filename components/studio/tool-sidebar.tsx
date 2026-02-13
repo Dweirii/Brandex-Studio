@@ -111,14 +111,14 @@ const toolGroups: ToolGroup[] = [
   {
     label: "Enhance",
     tools: [
-      {
-        id: "upscale",
-        label: "Upscale",
-        icon: <ZoomIn className="h-4 w-4" />,
-        credits: 20,
-        enabled: true,
-        requiresImage: true,
-      },
+      // {
+      //   id: "upscale",
+      //   label: "Upscale",
+      //   icon: <ZoomIn className="h-4 w-4" />,
+      //   credits: 20,
+      //   enabled: true,
+      //   requiresImage: true,
+      // },
       // {
       //   id: "relight",
       //   label: "Relight",
@@ -198,7 +198,7 @@ export function ToolSidebar() {
             )}>
               {tool.icon}
             </span>
-            <div className="flex flex-col min-w-0 flex-1">
+            <div className="hidden lg:flex flex-col min-w-0 flex-1">
               <span className={cn(
                 "truncate text-[11.5px] font-semibold leading-tight transition-colors duration-300",
                 isActive && "drop-shadow-sm"
@@ -230,8 +230,8 @@ export function ToolSidebar() {
 
   return (
     <TooltipProvider delayDuration={0}>
-      <aside className="relative flex w-[168px] shrink-0 flex-col bg-[#141517] shadow-[0_0_10px_0_rgba(0,0,0,0.6)]">
-        <div className="relative flex flex-col gap-1.5 overflow-y-auto px-2.5 py-4 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+      <aside className="relative flex w-16 lg:w-[140px] xl:w-[168px] shrink-0 flex-col bg-[#141517] shadow-[0_0_10px_0_rgba(0,0,0,0.6)]">
+        <div className="relative flex flex-col gap-1.5 overflow-y-auto px-2.5 py-4 scrollbar-none">
           {toolGroups.map((group, groupIndex) => (
             <div key={group.label} className="space-y-1">
               {groupIndex > 0 && (

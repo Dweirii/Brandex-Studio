@@ -83,6 +83,7 @@ export function Canvas() {
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [showInfo, setShowInfo] = useState(false);
   const [imageDimensions, setImageDimensions] = useState({ width: 0, height: 0 });
+  const [isSpaceHeld, setIsSpaceHeld] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
 
@@ -115,6 +116,71 @@ export function Canvas() {
     setZoom(1);
     setPan({ x: 0, y: 0 });
   }, [activeImageId]);
+
+  // ── Space key tracking for Illustrator-like hand tool (pan) ────────────
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.code === "Space" && !e.repeat) {
+        const target = e.target as HTMLElement;
+        if (target.tagName === "INPUT" || target.tagName === "TEXTAREA") return;
+        e.preventDefault();
+        setIsSpaceHeld(true);
+      }
+    };
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.code === "Space") {
+        setIsSpaceHeld(false);
+        setIsDragging(false);
+      }
+    };
+    // Release space when window loses focus (e.g. alt-tab)
+    const handleBlur = () => {
+      setIsSpaceHeld(false);
+      setIsDragging(false);
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
+    window.addEventListener("blur", handleBlur);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+      window.removeEventListener("blur", handleBlur);
+    };
+  }, []);
+
+  // ── Zoom helpers ───────────────────────────────────────────────────────
+
+  /** Calculate the zoom level that shows the image at 100% native pixels */
+  const calculateZoom100 = useCallback(() => {
+    const img = imageRef.current;
+    if (!img || !img.naturalWidth || !img.clientWidth) return 1;
+    return img.naturalWidth / img.clientWidth;
+  }, []);
+
+  /** Zoom to 100% native pixels */
+  const handleZoom100 = useCallback(() => {
+    const zoom100 = calculateZoom100();
+    setZoom(zoom100);
+    setPan({ x: 0, y: 0 });
+  }, [calculateZoom100]);
+
+  // Auto-zoom to 100% when AI Remover is selected for precise brushwork
+  useEffect(() => {
+    if (selectedTool === "ai_edit") {
+      requestAnimationFrame(() => {
+        const zoom100 = calculateZoom100();
+        if (zoom100 > 1) {
+          setZoom(zoom100);
+          setPan({ x: 0, y: 0 });
+          toast.info("Zoomed to 100% for precise brushwork", {
+            description: "Hold Space + drag to pan around the image",
+            duration: 4000,
+          });
+        }
+      });
+    }
+  }, [selectedTool, calculateZoom100]);
 
   // ── Eyedropper: load image into offscreen canvas for pixel sampling ────
   useEffect(() => {
@@ -324,9 +390,28 @@ export function Canvas() {
     setZoom(newZoom);
   };
 
-  // Handle pan with drag (disabled in color picker mode)
+  // ── Pan with drag — Space+drag works in all modes (Illustrator hand tool) ──
   const handleMouseDown = (e: React.MouseEvent) => {
+    // Space + drag = pan in ANY mode (Illustrator-like hand tool)
+    if (isSpaceHeld) {
+      e.preventDefault();
+      setIsDragging(true);
+      setDragStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
+      return;
+    }
+
+    // Color picker / AI painting: don't pan with regular drag
     if (isColorPicking || isAiPainting) return;
+
+    // Middle mouse button = pan (standard in design tools)
+    if (e.button === 1) {
+      e.preventDefault();
+      setIsDragging(true);
+      setDragStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
+      return;
+    }
+
+    // Regular drag: pan when zoomed in
     if (zoom > 1) {
       setIsDragging(true);
       setDragStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
@@ -334,15 +419,19 @@ export function Canvas() {
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
-    if (isColorPicking) {
-      handleEyedropperMove(e);
-      return;
-    }
+    // Panning takes priority when space is held or actively dragging
     if (isDragging) {
       setPan({
         x: e.clientX - dragStart.x,
         y: e.clientY - dragStart.y,
       });
+      return;
+    }
+
+    // Color picker eyedropper (only when not panning)
+    if (isColorPicking && !isSpaceHeld) {
+      handleEyedropperMove(e);
+      return;
     }
   };
 
@@ -505,9 +594,11 @@ export function Canvas() {
     <div 
       ref={containerRef}
       className={cn(
-        "relative flex flex-1 items-center justify-center overflow-hidden p-12 animate-in fade-in zoom-in-95 duration-700 transition-colors duration-300",
+        "relative flex flex-1 items-center justify-center overflow-hidden p-2 md:p-4 lg:p-6 xl:p-12 animate-in fade-in zoom-in-95 duration-700 transition-colors duration-300",
         getBackgroundStyle(),
-        isAiPainting
+        isSpaceHeld
+          ? isDragging ? "cursor-grabbing" : "cursor-grab"
+          : isAiPainting
           ? "cursor-none"
           : isColorPicking
           ? "cursor-crosshair"
@@ -567,7 +658,7 @@ export function Canvas() {
 
           {/* Mask painting overlay — only for Remove mode */}
           {isAiPainting && (
-            <MaskCanvas imageRef={imageRef} zoom={zoom} />
+            <MaskCanvas imageRef={imageRef} zoom={zoom} isSpaceHeld={isSpaceHeld} />
           )}
         </div>
         
@@ -577,7 +668,7 @@ export function Canvas() {
 
       {/* Zoom Controls */}
       <TooltipProvider delayDuration={0}>
-        <div className="absolute top-6 right-6 flex flex-col gap-2">
+        <div className="absolute top-2 lg:top-6 right-2 lg:right-6 flex flex-col gap-1.5 lg:gap-2">
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
@@ -612,6 +703,16 @@ export function Canvas() {
             </TooltipContent>
           </Tooltip>
 
+          {/* Zoom percentage indicator */}
+          <button
+            onClick={handleResetView}
+            className="flex h-9 items-center justify-center rounded-xl bg-[#141517] shadow-[0_0_10px_0_rgba(0,0,0,0.6)] hover:bg-[#1a1a1c] text-white/60 hover:text-white transition-all hover:scale-105 px-2 min-w-[3.5rem]"
+            title="Reset to fit (0)"
+          >
+            <span className="text-[10px] font-mono font-bold tabular-nums">{(zoom * 100).toFixed(0)}%</span>
+          </button>
+
+          {/* Fit to view */}
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
@@ -625,7 +726,7 @@ export function Canvas() {
               </Button>
             </TooltipTrigger>
             <TooltipContent side="left" className="bg-[#141517] backdrop-blur-2xl shadow-[0_0_10px_0_rgba(0,0,0,0.6)]">
-              <p className="text-xs font-semibold text-white">Reset View</p>
+              <p className="text-xs font-semibold text-white">Fit to View (0)</p>
             </TooltipContent>
           </Tooltip>
 
@@ -697,7 +798,7 @@ export function Canvas() {
 
       {/* Enhanced Image Info Panel */}
       {showInfo && activeImage && (
-        <div className="absolute top-6 left-6 rounded-xl bg-[#141517] backdrop-blur-2xl px-4 py-3 shadow-[0_0_10px_0_rgba(0,0,0,0.6)] animate-in slide-in-from-left-5 duration-300 min-w-[240px]">
+        <div className="absolute top-2 lg:top-6 left-2 lg:left-6 rounded-xl bg-[#141517] backdrop-blur-2xl px-4 py-3 shadow-[0_0_10px_0_rgba(0,0,0,0.6)] animate-in slide-in-from-left-5 duration-300 min-w-[240px]">
           <div className="space-y-2 text-xs">
             {/* File Info */}
             <div className="pb-2 border-b border-white/10">
@@ -791,35 +892,28 @@ export function Canvas() {
         </div>
       )}
 
-      {/* Zoom indicator */}
-      {zoom !== 1 && (
-        <div className="absolute bottom-24 left-6 rounded-lg bg-[#141517] backdrop-blur-2xl px-3 py-1.5 shadow-[0_0_10px_0_rgba(0,0,0,0.6)] animate-in fade-in duration-200">
-          <span className="text-xs font-mono font-semibold text-white/70">{(zoom * 100).toFixed(0)}%</span>
-        </div>
-      )}
-
-      {/* Keyboard shortcuts hint */}
-      <div className="absolute bottom-8 left-6 rounded-lg bg-[#141517] backdrop-blur-2xl px-3 py-2 shadow-[0_0_10px_0_rgba(0,0,0,0.6)]">
-        <div className="flex items-center gap-3 text-[10px] text-white/40">
-          <div className="flex items-center gap-1">
-            <kbd className="px-1.5 py-0.5 rounded bg-white/10 font-mono">←</kbd>
-            <kbd className="px-1.5 py-0.5 rounded bg-white/10 font-mono">→</kbd>
-            <span>Navigate</span>
+      {/* Keyboard shortcuts hint — responsive: hide less important ones on small screens */}
+      <div className="absolute bottom-14 xl:bottom-8 left-2 lg:left-6 rounded-lg bg-[#141517] backdrop-blur-2xl px-2 py-1.5 lg:px-3 lg:py-2 shadow-[0_0_10px_0_rgba(0,0,0,0.6)]">
+        <div className="flex items-center gap-1.5 lg:gap-3 text-[9px] lg:text-[10px] text-white/40">
+          <div className="flex items-center gap-0.5 lg:gap-1">
+            <kbd className="px-1 lg:px-1.5 py-0.5 rounded bg-white/10 font-mono text-[8px] lg:text-[9px]">←</kbd>
+            <kbd className="px-1 lg:px-1.5 py-0.5 rounded bg-white/10 font-mono text-[8px] lg:text-[9px]">→</kbd>
+            <span className="hidden md:inline">Navigate</span>
           </div>
           <div className="h-3 w-px bg-white/10" />
-          <div className="flex items-center gap-1">
-            <kbd className="px-1.5 py-0.5 rounded bg-white/10 font-mono">Scroll</kbd>
-            <span>Zoom</span>
+          <div className="flex items-center gap-0.5 lg:gap-1">
+            <kbd className="px-1 lg:px-1.5 py-0.5 rounded bg-white/10 font-mono text-[8px] lg:text-[9px]">Scroll</kbd>
+            <span className="hidden md:inline">Zoom</span>
           </div>
           <div className="h-3 w-px bg-white/10" />
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-0.5 lg:gap-1">
+            <kbd className="px-1 lg:px-1.5 py-0.5 rounded bg-white/10 font-mono text-[8px] lg:text-[9px]">Space</kbd>
+            <span className="hidden md:inline">Pan</span>
+          </div>
+          <div className="h-3 w-px bg-white/10 hidden lg:block" />
+          <div className="hidden lg:flex items-center gap-1">
             <kbd className="px-1.5 py-0.5 rounded bg-white/10 font-mono">F</kbd>
             <span>Fullscreen</span>
-          </div>
-          <div className="h-3 w-px bg-white/10" />
-          <div className="flex items-center gap-1">
-            <kbd className="px-1.5 py-0.5 rounded bg-white/10 font-mono">G</kbd>
-            <span>Grid</span>
           </div>
         </div>
       </div>
@@ -831,8 +925,8 @@ export function Canvas() {
         </div>
       )}
 
-      {/* Type badge */}
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-2.5 rounded-2xl bg-[#141517] backdrop-blur-2xl px-4 py-2 shadow-[0_0_10px_0_rgba(0,0,0,0.6)] transition-all duration-300 hover:scale-105">
+      {/* Type badge — top on small laptops, bottom on XL screens */}
+      <div className="absolute top-16 xl:top-auto xl:bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-2 xl:gap-2.5 rounded-xl xl:rounded-2xl bg-[#141517] backdrop-blur-2xl px-3 py-1.5 xl:px-4 xl:py-2 shadow-[0_0_10px_0_rgba(0,0,0,0.6)] transition-all duration-300 hover:scale-105">
         <span className={cn("rounded-lg px-2.5 py-1 text-[11px] font-semibold shadow-sm", colorClass)}>
           {label}
         </span>
@@ -883,7 +977,7 @@ export function Canvas() {
 
       {/* AI Edit mode indicator — only for Remove (painting) mode */}
       {isAiPainting && !showInfo && (
-        <div className="absolute top-6 left-6 rounded-lg bg-[#141517] backdrop-blur-2xl px-3 py-2 shadow-[0_0_10px_0_rgba(0,0,0,0.6)] animate-in slide-in-from-left-5 duration-300">
+        <div className="absolute top-2 lg:top-6 left-2 lg:left-6 rounded-lg bg-[#141517] backdrop-blur-2xl px-2.5 py-1.5 lg:px-3 lg:py-2 shadow-[0_0_10px_0_rgba(0,0,0,0.6)] animate-in slide-in-from-left-5 duration-300">
           <div className="flex items-center gap-2">
             <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
             <span className="text-xs font-semibold text-white/70">
@@ -893,9 +987,9 @@ export function Canvas() {
         </div>
       )}
 
-      {/* Color picker mode indicator — hide when info panel is open to avoid overlap */}
+      {/* Color picker mode indicator */}
       {isColorPicking && !showInfo && (
-        <div className="absolute top-6 left-6 rounded-lg bg-[#141517] backdrop-blur-2xl px-3 py-2 shadow-[0_0_10px_0_rgba(0,0,0,0.6)] animate-in slide-in-from-left-5 duration-300">
+        <div className="absolute top-2 lg:top-6 left-2 lg:left-6 rounded-lg bg-[#141517] backdrop-blur-2xl px-2.5 py-1.5 lg:px-3 lg:py-2 shadow-[0_0_10px_0_rgba(0,0,0,0.6)] animate-in slide-in-from-left-5 duration-300">
           <div className="flex items-center gap-2">
             <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
             <span className="text-xs font-semibold text-white/70">
@@ -910,7 +1004,7 @@ export function Canvas() {
 
       {/* Adjustments active indicator */}
       {isAdjusting && adjHasChanges && !showInfo && !isColorPicking && (
-        <div className="absolute top-6 left-6 rounded-lg bg-[#141517] backdrop-blur-2xl px-3 py-2 shadow-[0_0_10px_0_rgba(0,0,0,0.6)] animate-in slide-in-from-left-5 duration-300">
+        <div className="absolute top-2 lg:top-6 left-2 lg:left-6 rounded-lg bg-[#141517] backdrop-blur-2xl px-2.5 py-1.5 lg:px-3 lg:py-2 shadow-[0_0_10px_0_rgba(0,0,0,0.6)] animate-in slide-in-from-left-5 duration-300">
           <div className="flex items-center gap-2">
             <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
             <span className="text-xs font-semibold text-white/70">

@@ -94,49 +94,82 @@ export function drawBrushStroke(
 
 /**
  * Export a mask canvas as a black-and-white PNG blob.
- * White = area to edit, Black = area to keep.
+ * White = area to edit/erase, Black = area to keep.
+ *
+ * Uses canvas `drawImage()` with bilinear interpolation for high-quality
+ * scaling (instead of nearest-neighbor pixel copy). This produces smooth
+ * mask edges that align precisely with the source image dimensions,
+ * dramatically improving AI removal/edit quality on high-res images.
  */
 export async function exportMaskAsBlob(
   maskCanvas: HTMLCanvasElement,
   width: number,
   height: number
 ): Promise<Blob> {
-  // Create a clean B&W canvas
+  // ── Step 1: Convert painted strokes to a white-on-black mask ──────────
+  // The mask canvas has COLORED brush strokes (e.g. green/red).
+  // We need a clean white-on-black mask at the mask canvas's native resolution.
+  const tempCanvas = document.createElement("canvas");
+  tempCanvas.width = maskCanvas.width;
+  tempCanvas.height = maskCanvas.height;
+  const tempCtx = tempCanvas.getContext("2d")!;
+
+  // Start with opaque black (keep area)
+  tempCtx.fillStyle = "#000000";
+  tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+
+  // Read painted pixels and write white wherever there's content
+  const maskCtx = maskCanvas.getContext("2d")!;
+  const maskData = maskCtx.getImageData(0, 0, maskCanvas.width, maskCanvas.height);
+  const tempData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+
+  for (let i = 0; i < maskData.data.length; i += 4) {
+    if (maskData.data[i + 3] > 10) {
+      tempData.data[i] = 255;       // R → white
+      tempData.data[i + 1] = 255;   // G
+      tempData.data[i + 2] = 255;   // B
+      tempData.data[i + 3] = 255;   // A → opaque
+    }
+  }
+  tempCtx.putImageData(tempData, 0, 0);
+
+  // ── Step 2: Scale to image dimensions with smooth interpolation ────────
+  // Canvas drawImage uses bilinear interpolation, producing smooth edges
+  // instead of the blocky staircasing from nearest-neighbor pixel copy.
   const exportCanvas = document.createElement("canvas");
   exportCanvas.width = width;
   exportCanvas.height = height;
   const ctx = exportCanvas.getContext("2d")!;
 
-  // Black background (keep area)
   ctx.fillStyle = "#000000";
   ctx.fillRect(0, 0, width, height);
 
-  // Draw the mask in white (edit area)
-  // The mask canvas has colored brush strokes; we just need to detect non-transparent pixels
-  const maskCtx = maskCanvas.getContext("2d")!;
-  const maskData = maskCtx.getImageData(0, 0, maskCanvas.width, maskCanvas.height);
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "high";
+  ctx.drawImage(tempCanvas, 0, 0, width, height);
+
+  // ── Step 3: Threshold to clean B&W ────────────────────────────────────
+  // Smooth scaling creates anti-aliased edges (gray pixels).
+  // We threshold them to strict B&W. A lower threshold (64) includes
+  // more of the transition zone, slightly expanding the mask at edges
+  // which helps the AI produce cleaner removal results.
   const exportData = ctx.getImageData(0, 0, width, height);
+  const data = exportData.data;
 
-  const scaleX = maskCanvas.width / width;
-  const scaleY = maskCanvas.height / height;
-
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
-      const srcX = Math.floor(x * scaleX);
-      const srcY = Math.floor(y * scaleY);
-      const srcIdx = (srcY * maskCanvas.width + srcX) * 4;
-      const alpha = maskData.data[srcIdx + 3];
-
-      if (alpha > 10) {
-        const dstIdx = (y * width + x) * 4;
-        exportData.data[dstIdx] = 255;     // R
-        exportData.data[dstIdx + 1] = 255; // G
-        exportData.data[dstIdx + 2] = 255; // B
-        exportData.data[dstIdx + 3] = 255; // A
-      }
+  for (let i = 0; i < data.length; i += 4) {
+    const brightness = data[i]; // R channel (grayscale from B&W source)
+    if (brightness > 64) {
+      data[i] = 255;
+      data[i + 1] = 255;
+      data[i + 2] = 255;
+      data[i + 3] = 255;
+    } else {
+      data[i] = 0;
+      data[i + 1] = 0;
+      data[i + 2] = 0;
+      data[i + 3] = 255;
     }
   }
-
   ctx.putImageData(exportData, 0, 0);
 
   return new Promise((resolve, reject) => {

@@ -36,6 +36,12 @@ export const metadata: Metadata = {
     "AI-powered creative production for your product images. Remove backgrounds, generate stunning scenes, and create professional product photography in seconds.",
 };
 
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{

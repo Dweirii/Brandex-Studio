@@ -111,7 +111,6 @@ export function AiEditPanel() {
       formData.append("image", imageBlob, "image.png");
       formData.append("mask", maskBlob, "mask.png");
       formData.append("projectId", projectId);
-      formData.append("editMode", "remove");
       formData.append("parentId", activeImage.id);
 
       const result = await studioUpload<{
@@ -120,7 +119,7 @@ export function AiEditPanel() {
         type: string;
         creditsCost: number;
         newBalance: number;
-      }>("/ai-edit", formData);
+      }>("/ai-remove", formData);
 
       addImage({
         id: result.id,
@@ -152,7 +151,7 @@ export function AiEditPanel() {
   ]);
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       {/* Header */}
       <Card className="border-0 shadow-none bg-transparent">
         <CardHeader className="px-0 pt-0 pb-3">
@@ -168,39 +167,43 @@ export function AiEditPanel() {
       </Card>
 
       {/* ── Brush Size ────────────────────────────────────────────────── */}
-      <div className="space-y-2.5">
+      <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <Label>Brush Size</Label>
-          <span className="font-mono text-xs text-white/50 tabular-nums">
-            {brushSize}px
-          </span>
+          <Label className="text-xs">Brush Size</Label>
+          <div className="flex items-center gap-2">
+            <span className="font-mono text-xs text-white/50 tabular-nums">
+              {brushSize}px
+            </span>
+            <div className="flex items-center gap-1">
+              <button
+                className="flex h-6 w-6 items-center justify-center rounded-md bg-white/6 text-white/50 hover:text-white hover:bg-white/10 transition-all active:scale-95"
+                onClick={() => setBrushSize(Math.max(5, brushSize - 5))}
+                title="Decrease brush size ([)"
+              >
+                <Minus className="h-3 w-3" />
+              </button>
+              <button
+                className="flex h-6 w-6 items-center justify-center rounded-md bg-white/6 text-white/50 hover:text-white hover:bg-white/10 transition-all active:scale-95"
+                onClick={() => setBrushSize(Math.min(100, brushSize + 5))}
+                title="Increase brush size (])"
+              >
+                <Plus className="h-3 w-3" />
+              </button>
+            </div>
+          </div>
         </div>
-        <div className="flex items-center gap-3">
-          <button
-            className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/6 text-white/50 hover:text-white hover:bg-white/10 transition-all"
-            onClick={() => setBrushSize(Math.max(5, brushSize - 5))}
-          >
-            <Minus className="h-3 w-3" />
-          </button>
-          <input
-            type="range"
-            min={5}
-            max={100}
-            step={1}
-            value={brushSize}
-            onChange={(e) => setBrushSize(Number(e.target.value))}
-            className="studio-slider flex-1"
-            style={{
-              background: `linear-gradient(to right, rgba(0,235,2,0.4) 0%, rgba(0,235,2,0.4) ${((brushSize - 5) / 95) * 100}%, rgba(255,255,255,0.08) ${((brushSize - 5) / 95) * 100}%, rgba(255,255,255,0.08) 100%)`,
-            }}
-          />
-          <button
-            className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/6 text-white/50 hover:text-white hover:bg-white/10 transition-all"
-            onClick={() => setBrushSize(Math.min(100, brushSize + 5))}
-          >
-            <Plus className="h-3 w-3" />
-          </button>
-        </div>
+        <input
+          type="range"
+          min={5}
+          max={100}
+          step={1}
+          value={brushSize}
+          onChange={(e) => setBrushSize(Number(e.target.value))}
+          className="studio-slider w-full"
+          style={{
+            background: `linear-gradient(to right, rgba(0,235,2,0.4) 0%, rgba(0,235,2,0.4) ${((brushSize - 5) / 95) * 100}%, rgba(255,255,255,0.08) ${((brushSize - 5) / 95) * 100}%, rgba(255,255,255,0.08) 100%)`,
+          }}
+        />
       </div>
 
       {/* ── Mask indicator ────────────────────────────────────────────── */}

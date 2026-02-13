@@ -13,6 +13,8 @@ if (!API_URL && typeof window !== "undefined") {
 const DEFAULT_TIMEOUT_MS = 240_000;
 /** Default timeout for file uploads (3 minutes) */
 const UPLOAD_TIMEOUT_MS = 180_000;
+/** Extended timeout for heavy AI operations (upscale, skin enhance) — 6 minutes */
+export const HEAVY_UPLOAD_TIMEOUT_MS = 360_000;
 
 /**
  * Custom error class that preserves server-side error metadata
@@ -107,20 +109,27 @@ export function useStudioApi() {
   /**
    * Upload a file to the Studio API (multipart/form-data).
    * Does NOT set Content-Type — lets the browser set boundary.
-   * Has a longer timeout for file uploads.
+   *
+   * @param path     - API path (e.g. "/upload", "/upscale", "/skin-enhance")
+   * @param formData - The form data to send
+   * @param options  - Optional config: `timeoutMs` overrides the default 3-min timeout.
+   *                   Use `HEAVY_UPLOAD_TIMEOUT_MS` (6 min) for operations like upscale
+   *                   and skin enhance that involve external AI processing.
    */
   const studioUpload = useCallback(
     async <T = unknown>(
       path: string,
-      formData: FormData
+      formData: FormData,
+      options?: { timeoutMs?: number }
     ): Promise<T> => {
       if (!API_URL) throw new StudioApiError("API URL not configured", 0);
 
       const token = await getToken({ template: "CustomerJWTBrandex" });
       if (!token) throw new StudioApiError("Not authenticated", 401);
 
+      const effectiveTimeout = options?.timeoutMs ?? UPLOAD_TIMEOUT_MS;
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), UPLOAD_TIMEOUT_MS);
+      const timeout = setTimeout(() => controller.abort(), effectiveTimeout);
 
       const url = `${API_URL}/studio${path}`;
 

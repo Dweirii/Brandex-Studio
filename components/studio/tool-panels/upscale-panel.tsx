@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 import { useStudioStore } from "@/stores/use-studio-store";
-import { useStudioApi } from "@/hooks/use-studio-api";
+import { useStudioApi, HEAVY_UPLOAD_TIMEOUT_MS } from "@/hooks/use-studio-api";
 import { useCredits } from "@/hooks/use-credits";
 import { handleError } from "@/lib/error-handler";
 import { Button } from "@/components/ui/button";
@@ -66,7 +66,7 @@ export function UpscalePanel() {
         type: string;
         creditsCost: number;
         newBalance: number;
-      }>("/upscale", formData);
+      }>("/upscale", formData, { timeoutMs: HEAVY_UPLOAD_TIMEOUT_MS });
 
       addImage({
         id: result.id,
@@ -96,7 +96,7 @@ export function UpscalePanel() {
           <h3 className="font-semibold">Upscale Image</h3>
         </div>
         <p className="text-xs text-muted-foreground">
-          Clarity AI — #1 upscaler with 26M+ runs
+          Magnific AI — Industry-leading upscaler
         </p>
       </div>
 
@@ -111,7 +111,7 @@ export function UpscalePanel() {
                 Precision
               </Label>
               <p className="text-xs text-muted-foreground">
-                High fidelity, preserves exact details (20 credits)
+                Faithful upscaling, perfect for products (20 credits)
               </p>
             </div>
           </div>
@@ -123,7 +123,7 @@ export function UpscalePanel() {
                 Creative
               </Label>
               <p className="text-xs text-muted-foreground">
-                AI-enhanced details & sharpening (30 credits)
+                Prompt-guided enhancement with AI details (30 credits)
               </p>
             </div>
           </div>

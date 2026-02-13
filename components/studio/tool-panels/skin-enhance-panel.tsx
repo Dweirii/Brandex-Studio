@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 import { useStudioStore } from "@/stores/use-studio-store";
-import { useStudioApi } from "@/hooks/use-studio-api";
+import { useStudioApi, HEAVY_UPLOAD_TIMEOUT_MS } from "@/hooks/use-studio-api";
 import { useCredits } from "@/hooks/use-credits";
 import { handleError } from "@/lib/error-handler";
 import { Button } from "@/components/ui/button";
@@ -69,7 +69,7 @@ export function SkinEnhancePanel() {
         type: string;
         creditsCost: number;
         newBalance: number;
-      }>("/skin-enhance", formData);
+      }>("/skin-enhance", formData, { timeoutMs: HEAVY_UPLOAD_TIMEOUT_MS });
 
       addImage({
         id: result.id,

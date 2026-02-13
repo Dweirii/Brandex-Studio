@@ -19,12 +19,14 @@ interface MaskCanvasProps {
   imageRef: React.RefObject<HTMLImageElement | null>;
   /** Current zoom level (to scale brush correctly) */
   zoom: number;
+  /** When true, the mask canvas becomes transparent to pointer events (parent handles panning) */
+  isSpaceHeld?: boolean;
 }
 
 /** Semi-transparent highlight color for the painted mask */
 const MASK_COLOR = "rgba(0, 235, 2, 0.35)";
 
-export function MaskCanvas({ imageRef, zoom }: MaskCanvasProps) {
+export function MaskCanvas({ imageRef, zoom, isSpaceHeld = false }: MaskCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const isDrawing = useRef(false);
   const lastPos = useRef<{ x: number; y: number } | null>(null);
@@ -200,8 +202,11 @@ export function MaskCanvas({ imageRef, zoom }: MaskCanvasProps) {
         className="absolute inset-0 w-full h-full"
         style={{
           zIndex: 10,
-          cursor: "none",
+          cursor: isSpaceHeld ? "grab" : "none",
           touchAction: "none",
+          // When Space is held, let pointer events pass through to the parent
+          // so the canvas container can handle panning (Illustrator-like hand tool)
+          pointerEvents: isSpaceHeld ? "none" : undefined,
         }}
         onMouseDown={handlePointerDown}
         onMouseMove={handleMouseMove}
@@ -209,8 +214,8 @@ export function MaskCanvas({ imageRef, zoom }: MaskCanvasProps) {
         onMouseLeave={handleMouseLeave}
       />
 
-      {/* Custom brush cursor */}
-      {cursor.visible && (
+      {/* Custom brush cursor — hidden when Space is held (pan mode) */}
+      {cursor.visible && !isSpaceHeld && (
         <div
           className="pointer-events-none absolute rounded-full border-2 border-primary/80 shadow-[0_0_6px_0_rgba(0,235,2,0.4)]"
           style={{

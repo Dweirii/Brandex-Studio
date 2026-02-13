@@ -36,8 +36,8 @@ export function ToolPanel() {
   if (!selectedTool) return null;
 
   return (
-    <div className="relative w-80 bg-[#141517] shadow-[0_0_10px_0_rgba(0,0,0,0.6)] animate-in slide-in-from-right-5 duration-300">
-      <div className="relative flex items-center justify-between px-5 py-4 mb-2">
+    <div className="relative w-64 lg:w-72 xl:w-80 shrink-0 bg-[#141517] shadow-[0_0_10px_0_rgba(0,0,0,0.6)] animate-in slide-in-from-right-5 duration-300">
+        <div className="relative flex items-center justify-between px-5 py-4 mb-2">
         <div className="flex items-center gap-2">
           <span className="text-xs font-bold uppercase tracking-[0.1em] text-white/40">
             Options
@@ -53,7 +53,7 @@ export function ToolPanel() {
           <X className="h-4 w-4" />
         </Button>
       </div>
-      <div className="relative p-5 overflow-y-auto max-h-[calc(100vh-14rem)] scrollbar-thin">
+      <div className="relative p-3 lg:p-4 xl:p-5 overflow-y-auto max-h-[calc(100vh-10rem)] scrollbar-thin">
         {selectedTool === "remove_bg" && <RemoveBgPanel />}
         {selectedTool === "ai_edit" && <AiEditPanel />}
         {selectedTool === "ai_background" && <AiBackgroundPanel />}

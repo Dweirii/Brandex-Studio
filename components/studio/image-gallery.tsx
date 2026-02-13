@@ -300,7 +300,7 @@ export function ImageGallery({ onUpload }: ImageGalleryProps) {
 
   return (
     <TooltipProvider delayDuration={0}>
-      <div className="relative flex h-20 shrink-0 items-center gap-4 bg-[#141517] shadow-[0_0_10px_0_rgba(0,0,0,0.6)] backdrop-blur-2xl px-5">
+      <div className="relative flex h-12 lg:h-16 xl:h-20 shrink-0 items-center gap-1.5 lg:gap-3 xl:gap-4 bg-[#141517] shadow-[0_0_10px_0_rgba(0,0,0,0.6)] backdrop-blur-2xl px-2 lg:px-3 xl:px-5">
         {/* Filters */}
         <ImageFilters
           onFilterChange={setFilters}
@@ -353,7 +353,7 @@ export function ImageGallery({ onUpload }: ImageGalleryProps) {
                         setLastClickedId(image.id);
                       }}
                       className={cn(
-                        "relative h-14 w-14 overflow-hidden rounded-xl transition-all duration-300",
+                        "relative h-9 w-9 lg:h-12 lg:w-12 xl:h-14 xl:w-14 overflow-hidden rounded-md lg:rounded-lg xl:rounded-xl transition-all duration-300",
                         isImageSelected
                           ? "ring-2 ring-primary scale-105 shadow-[0_0_10px_0_rgba(0,235,2,0.5)]"
                           : isActive
@@ -451,7 +451,7 @@ export function ImageGallery({ onUpload }: ImageGalleryProps) {
               <TooltipTrigger asChild>
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  className="group/add flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-xl bg-[#141517] transition-all duration-300 hover:scale-105 hover:shadow-[0_0_8px_0_rgba(0,0,0,0.4)]"
+                  className="group/add flex h-9 w-9 lg:h-12 lg:w-12 xl:h-14 xl:w-14 shrink-0 items-center justify-center rounded-md lg:rounded-lg xl:rounded-xl bg-[#141517] transition-all duration-300 hover:scale-105 hover:shadow-[0_0_8px_0_rgba(0,0,0,0.4)]"
                 >
                   <Plus className="h-5 w-5 text-white/30 transition-all duration-300 group-hover/add:text-primary group-hover/add:scale-110" />
                 </button>
