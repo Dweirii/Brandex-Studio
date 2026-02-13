@@ -370,9 +370,6 @@ export function ProjectBrowser() {
           {!isLoadingProjects && projects.length === 0 && (
             <div className="flex flex-col items-center justify-center py-32 animate-in fade-in slide-in-from-bottom-8 duration-1000">
               <div className="relative mb-10">
-                <div className="flex h-28 w-28 items-center justify-center rounded-3xl bg-[#141517] shadow-[0_0_15px_0_rgba(0,0,0,0.6)]">
-                  <Sparkles className="h-14 w-14 text-white/[0.2] animate-pulse" />
-                </div>
                 <div className="absolute -right-2 -top-2 h-4 w-4 rounded-full bg-primary animate-pulse" />
               </div>
               <h2 className="mb-3 text-2xl font-bold text-white/90">
