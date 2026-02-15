@@ -1,7 +1,7 @@
 "use client";
 
 import { UserButton } from "@clerk/nextjs";
-import { ArrowLeft, Coins, Palette, History, GitCompare, HelpCircle } from "lucide-react";
+import { ArrowLeft, Coins, Palette, History, GitCompare, HelpCircle, ShoppingBag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCredits } from "@/hooks/use-credits";
@@ -42,6 +42,9 @@ export function StudioHeader({ onOpenGuide }: StudioHeaderProps) {
   const activeImage = images.find((img) => img.id === activeImageId);
   const hasParent = activeImage?.parentId != null;
 
+  // Get Store URL from env
+  const storeUrl = process.env.NEXT_PUBLIC_STORE_URL || "http://localhost:3000";
+
   return (
     <header className="group/header flex h-14 shrink-0 items-center justify-between bg-[#141517] shadow-[0_0_10px_0_rgba(0,0,0,0.6)] backdrop-blur-2xl px-2 lg:px-4 relative">
       {/* Left: Back + Logo + Project Name */}
@@ -71,6 +74,7 @@ export function StudioHeader({ onOpenGuide }: StudioHeaderProps) {
 
       {/* Right: Quick Actions + Background Toggle + Credits + User */}
       <div className="flex items-center gap-1.5 lg:gap-3 relative z-10">
+        {activeImage && <div className="h-4 w-px bg-gradient-to-b from-transparent via-white/[0.12] to-transparent" />}
         {/* Quick View Actions */}
         {activeImage && (
           <TooltipProvider delayDuration={0}>

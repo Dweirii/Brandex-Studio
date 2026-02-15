@@ -64,14 +64,6 @@ const toolGroups: ToolGroup[] = [
         enabled: true,
         requiresImage: true,
       },
-      {
-        id: "ai_edit",
-        label: "AI Remover",
-        icon: <Paintbrush className="h-4 w-4" />,
-        credits: 25,
-        enabled: true,
-        requiresImage: true,
-      },
       // {
       //   id: "ai_background",
       //   label: "AI Background",
