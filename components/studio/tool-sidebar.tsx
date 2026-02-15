@@ -12,6 +12,7 @@ import {
   BrainCircuit,
   Pipette,
   SlidersHorizontal,
+  Maximize2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -36,7 +37,9 @@ interface ToolItem {
     | "relight"
     | "skin_enhance"
     | "color_picker"
-    | "adjustments";
+    | "adjustments"
+    | "image_expand"
+    | "gemini_ai_editor";
   label: string;
   icon: React.ReactNode;
   credits: number;
@@ -131,6 +134,27 @@ const toolGroups: ToolGroup[] = [
         id: "skin_enhance",
         label: "Skin",
         icon: <Sparkles className="h-4 w-4" />,
+        credits: 20,
+        enabled: true,
+        requiresImage: true,
+      },
+    ],
+  },
+  {
+    label: "AI Editing",
+    tools: [
+      {
+        id: "gemini_ai_editor",
+        label: "AI Editor",
+        icon: <Wand2 className="h-4 w-4" />,
+        credits: 15,
+        enabled: true,
+        requiresImage: true,
+      },
+      {
+        id: "image_expand",
+        label: "Expand",
+        icon: <Maximize2 className="h-4 w-4" />,
         credits: 20,
         enabled: true,
         requiresImage: true,

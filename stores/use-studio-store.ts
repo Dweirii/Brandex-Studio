@@ -45,6 +45,8 @@ export type Tool =
   | "skin_enhance"
   | "color_picker"
   | "adjustments"
+  | "image_expand"
+  | "gemini_ai_editor"
   | null;
 
 type ViewMode = "browser" | "workspace";

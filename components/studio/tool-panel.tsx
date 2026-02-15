@@ -12,6 +12,8 @@ import { SkinEnhancePanel } from "./tool-panels/skin-enhance-panel";
 import { ColorPickerPanel } from "./tool-panels/color-picker-panel";
 import { AdjustmentsPanel } from "./tool-panels/adjustments-panel";
 import { AiEditPanel } from "./tool-panels/ai-edit-panel";
+import { ImageExpandPanel } from "./tool-panels/image-expand-panel";
+import { GeminiAiEditorPanel } from "./tool-panels/gemini-ai-editor-panel";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useEffect } from "react";
@@ -65,6 +67,8 @@ export function ToolPanel() {
         {selectedTool === "skin_enhance" && <SkinEnhancePanel />}
         {selectedTool === "color_picker" && <ColorPickerPanel />}
         {selectedTool === "adjustments" && <AdjustmentsPanel />}
+        {selectedTool === "image_expand" && <ImageExpandPanel />}
+        {selectedTool === "gemini_ai_editor" && <GeminiAiEditorPanel />}
       </div>
     </div>
   );
