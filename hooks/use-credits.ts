@@ -5,6 +5,23 @@ import { useAuth } from "@clerk/nextjs";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
+/**
+ * Extract the base URL (scheme + host) from the full API_URL so we can call
+ * non-studio endpoints like /credits/purchase/checkout.
+ * e.g. "http://localhost:3001/api/abc123" → "http://localhost:3001"
+ */
+const getAdminBaseUrl = () => {
+  if (!API_URL) return "";
+  const match = API_URL.match(/^(https?:\/\/[^/]+)/);
+  return match ? match[1] : API_URL;
+};
+
+const getStoreId = () => {
+  if (!API_URL) return "";
+  const match = API_URL.match(/\/api\/([^/]+)/);
+  return match ? match[1] : "";
+};
+
 export function useCredits() {
   const { getToken, isSignedIn } = useAuth();
   const [balance, setBalance] = useState(0);
@@ -105,5 +122,46 @@ export function useCredits() {
     return () => document.removeEventListener("visibilitychange", handleVisibility);
   }, [fetchBalance, isSignedIn]);
 
-  return { balance, isLoading, error, refresh, setBalanceFromResponse };
+  /**
+   * Initiate a Stripe checkout session to purchase credits.
+   * Returns the Stripe checkout URL on success, or an error string.
+   */
+  const purchaseCredits = useCallback(
+    async (packId: "PACK_50" | "PACK_100"): Promise<{ url?: string; error?: string }> => {
+      try {
+        const token = await getToken({ template: "CustomerJWTBrandex" });
+        if (!token) return { error: "Please sign in to purchase credits" };
+
+        const adminBase = getAdminBaseUrl();
+        const storeId = getStoreId();
+        if (!adminBase || !storeId) return { error: "API not configured" };
+
+        const res = await fetch(
+          `${adminBase}/api/${storeId}/credits/purchase/checkout`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ packId }),
+          }
+        );
+
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          throw new Error(data.error || `Checkout failed (${res.status})`);
+        }
+
+        const data = await res.json();
+        return { url: data.url };
+      } catch (err) {
+        console.error("[useCredits] purchaseCredits error:", err);
+        return { error: err instanceof Error ? err.message : "Failed to start checkout" };
+      }
+    },
+    [getToken]
+  );
+
+  return { balance, isLoading, error, refresh, setBalanceFromResponse, purchaseCredits };
 }

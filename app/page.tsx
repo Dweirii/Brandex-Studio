@@ -15,6 +15,7 @@ import { BackgroundBeams } from "@/components/ui/beams";
 import { useStudioStore } from "@/stores/use-studio-store";
 import { useStudioApi } from "@/hooks/use-studio-api";
 import { WelcomeGuide, useWelcomeGuide } from "@/components/studio/welcome-guide";
+import { BuyCreditsModal } from "@/components/studio/buy-credits-modal";
 import { handleError } from "@/lib/error-handler";
 import { toast } from "sonner";
 
@@ -156,6 +157,7 @@ export default function StudioPage() {
       
       <StudioHeader onOpenGuide={openGuide} />
       <WelcomeGuide open={showGuide} onOpenChange={setShowGuide} />
+      <BuyCreditsModal />
 
       <div className="flex flex-1 overflow-hidden relative z-10">
         <ToolSidebar />

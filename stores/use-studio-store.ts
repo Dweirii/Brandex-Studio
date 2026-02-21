@@ -80,6 +80,7 @@ interface StudioState {
   gridOverlay: GridOverlay;
   showHistory: boolean;
   showComparison: boolean;
+  showBuyCredits: boolean;
 
   // View actions
   setView: (view: ViewMode) => void;
@@ -109,6 +110,7 @@ interface StudioState {
   setGridOverlay: (grid: GridOverlay) => void;
   setShowHistory: (show: boolean) => void;
   setShowComparison: (show: boolean) => void;
+  setShowBuyCredits: (show: boolean) => void;
   reset: () => void;
 }
 
@@ -130,6 +132,7 @@ const initialState = {
   gridOverlay: "none" as GridOverlay,
   showHistory: false,
   showComparison: false,
+  showBuyCredits: false,
 };
 
 export const useStudioStore = create<StudioState>((set) => ({
@@ -257,6 +260,8 @@ export const useStudioStore = create<StudioState>((set) => ({
   setShowHistory: (show) => set({ showHistory: show }),
 
   setShowComparison: (show) => set({ showComparison: show }),
+
+  setShowBuyCredits: (show) => set({ showBuyCredits: show }),
 
   reset: () => set(initialState),
 }));

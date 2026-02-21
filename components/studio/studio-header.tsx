@@ -28,6 +28,7 @@ interface StudioHeaderProps {
 
 export function StudioHeader({ onOpenGuide }: StudioHeaderProps) {
   const { balance, isLoading } = useCredits();
+  const setShowBuyCredits = useStudioStore((s) => s.setShowBuyCredits);
   const projectName = useStudioStore((s) => s.projectName);
   const closeProject = useStudioStore((s) => s.closeProject);
   const canvasBackground = useStudioStore((s) => s.canvasBackground);
@@ -43,8 +44,7 @@ export function StudioHeader({ onOpenGuide }: StudioHeaderProps) {
   const hasParent = activeImage?.parentId != null;
 
   // Get Store URL from env
-  const storeUrl = process.env.NEXT_PUBLIC_STORE_URL || "https://brandexme.com/credits";
-  const LOW_CREDITS_THRESHOLD = 20; 
+  const LOW_CREDITS_THRESHOLD = 20;
   return (
     <header className="group/header flex h-14 shrink-0 items-center justify-between bg-[#141517] shadow-[0_0_10px_0_rgba(0,0,0,0.6)] backdrop-blur-2xl px-2 lg:px-4 relative">
       {/* Left: Back + Logo + Project Name */}
@@ -186,12 +186,10 @@ export function StudioHeader({ onOpenGuide }: StudioHeaderProps) {
         <TooltipProvider delayDuration={0}>
           <Tooltip>
             <TooltipTrigger asChild>
-              <a
-                href={`${storeUrl}/credits`}
-                target="_blank"
-                rel="noopener noreferrer"
+              <button
+                onClick={() => setShowBuyCredits(true)}
                 className={cn(
-                  "group/credits flex items-center gap-2 rounded-xl px-3.5 py-2 transition-all duration-300 hover:scale-[1.02] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                  "group/credits flex items-center gap-2 rounded-xl px-3.5 py-2 transition-all duration-300 hover:scale-[1.02] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary cursor-pointer",
                   balance <= LOW_CREDITS_THRESHOLD
                     ? "bg-destructive/20 hover:bg-destructive/30 hover:shadow-[0_0_8px_0_rgba(239,68,68,0.35)]"
                     : "bg-white/6 hover:shadow-[0_0_8px_0_rgba(255,184,0,0.3)]"
@@ -213,7 +211,7 @@ export function StudioHeader({ onOpenGuide }: StudioHeaderProps) {
                     {balance.toLocaleString()}
                   </span>
                 )}
-              </a>
+              </button>
             </TooltipTrigger>
             <TooltipContent
               side="bottom"
