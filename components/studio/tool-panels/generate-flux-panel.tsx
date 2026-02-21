@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Wand2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
+import { BuyCreditsPrompt } from "@/components/studio/buy-credits-prompt";
 
 const ASPECT_RATIOS = [
   { value: "1:1", label: "1:1" },
@@ -166,9 +167,7 @@ export function GenerateFluxPanel() {
       </Button>
 
       {!canAfford && (
-        <p className="text-center text-xs text-destructive">
-          You need {creditCost} credits. Current balance: {balance}
-        </p>
+        <BuyCreditsPrompt needed={creditCost} balance={balance} />
       )}
     </div>
   );

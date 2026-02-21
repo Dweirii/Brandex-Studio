@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react";
 import { ImagePlus, Coins } from "lucide-react";
+import { BuyCreditsPrompt } from "@/components/studio/buy-credits-prompt";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -192,9 +193,7 @@ export function AiBackgroundPanel() {
           </Button>
 
           {!canAfford && (
-            <p className="text-center text-xs text-destructive">
-              You need {COST} credits. Current balance: {balance}
-            </p>
+            <BuyCreditsPrompt needed={COST} balance={balance} />
           )}
         </div>
       </CardContent>

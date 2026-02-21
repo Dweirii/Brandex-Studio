@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/card";
 import { Wand2, Coins, Sparkles, RotateCcw, Info } from "lucide-react";
 import { toast } from "sonner";
+import { BuyCreditsPrompt } from "@/components/studio/buy-credits-prompt";
 import {
   Tooltip,
   TooltipContent,
@@ -263,9 +264,7 @@ export function GeminiAiEditorPanel() {
       </div>
 
       {!canAfford && (
-        <p className="text-center text-xs text-destructive">
-          You need {COST} credits. Current balance: {balance}
-        </p>
+        <BuyCreditsPrompt needed={COST} balance={balance} />
       )}
 
       {/* Tip */}

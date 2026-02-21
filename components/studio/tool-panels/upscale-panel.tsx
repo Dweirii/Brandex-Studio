@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ZoomIn, Sparkles } from "lucide-react";
 import { toast } from "sonner";
+import { BuyCreditsPrompt } from "@/components/studio/buy-credits-prompt";
 
 export function UpscalePanel() {
   const { studioUpload } = useStudioApi();
@@ -160,9 +161,7 @@ export function UpscalePanel() {
       </Button>
 
       {!canAfford && (
-        <p className="text-center text-xs text-destructive">
-          You need {creditCost} credits. Current balance: {balance}
-        </p>
+        <BuyCreditsPrompt needed={creditCost} balance={balance} />
       )}
     </div>
   );

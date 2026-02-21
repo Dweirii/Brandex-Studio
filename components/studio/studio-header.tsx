@@ -42,8 +42,8 @@ export function StudioHeader({ onOpenGuide }: StudioHeaderProps) {
   const activeImage = images.find((img) => img.id === activeImageId);
   const hasParent = activeImage?.parentId != null;
 
-  // Get Store URL from env
   const storeUrl = process.env.NEXT_PUBLIC_STORE_URL || "http://localhost:3000";
+  const LOW_CREDITS_THRESHOLD = 20;
 
   return (
     <header className="group/header flex h-14 shrink-0 items-center justify-between bg-[#141517] shadow-[0_0_10px_0_rgba(0,0,0,0.6)] backdrop-blur-2xl px-2 lg:px-4 relative">
@@ -183,16 +183,48 @@ export function StudioHeader({ onOpenGuide }: StudioHeaderProps) {
           </TooltipProvider>
         )}
 
-        <div className="group/credits flex items-center gap-2 rounded-xl bg-white/[0.06] px-3.5 py-2 transition-all duration-300 hover:shadow-[0_0_8px_0_rgba(255,184,0,0.3)] hover:scale-[1.02]">
-          <Coins className="h-3.5 w-3.5 text-amber-400/90 transition-all duration-300 group-hover/credits:rotate-12 group-hover/credits:scale-110" />
-          {isLoading ? (
-            <Skeleton className="h-4 w-12 bg-white/10 rounded-md" />
-          ) : (
-            <span className="font-mono text-sm font-semibold text-white/80 transition-colors duration-300 group-hover/credits:text-white tabular-nums">
-              {balance.toLocaleString()}
-            </span>
-          )}
-        </div>
+        <TooltipProvider delayDuration={0}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <a
+                href={`${storeUrl}/credits`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={cn(
+                  "group/credits flex items-center gap-2 rounded-xl px-3.5 py-2 transition-all duration-300 hover:scale-[1.02] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                  balance <= LOW_CREDITS_THRESHOLD
+                    ? "bg-destructive/20 hover:bg-destructive/30 hover:shadow-[0_0_8px_0_rgba(239,68,68,0.35)]"
+                    : "bg-white/6 hover:shadow-[0_0_8px_0_rgba(255,184,0,0.3)]"
+                )}
+              >
+                {balance <= LOW_CREDITS_THRESHOLD ? (
+                  <ShoppingBag className="h-3.5 w-3.5 text-red-400 transition-all duration-300 group-hover/credits:scale-110" />
+                ) : (
+                  <Coins className="h-3.5 w-3.5 text-amber-400/90 transition-all duration-300 group-hover/credits:rotate-12 group-hover/credits:scale-110" />
+                )}
+                {isLoading ? (
+                  <Skeleton className="h-4 w-12 bg-white/10 rounded-md" />
+                ) : balance <= LOW_CREDITS_THRESHOLD ? (
+                  <span className="text-sm font-semibold text-red-400 transition-colors duration-300 group-hover/credits:text-red-300 tabular-nums">
+                    {balance.toLocaleString()} — Buy more
+                  </span>
+                ) : (
+                  <span className="font-mono text-sm font-semibold text-white/80 transition-colors duration-300 group-hover/credits:text-white tabular-nums">
+                    {balance.toLocaleString()}
+                  </span>
+                )}
+              </a>
+            </TooltipTrigger>
+            <TooltipContent
+              side="bottom"
+              className="bg-[#141517] backdrop-blur-2xl shadow-[0_0_10px_0_rgba(0,0,0,0.6)]"
+            >
+              <p className="text-xs font-semibold text-white">
+                {balance <= LOW_CREDITS_THRESHOLD ? "Buy more credits" : "Manage credits"}
+              </p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
         <div className="transition-all duration-300 hover:scale-105 active:scale-95">
           <UserButton
             afterSignOutUrl="/sign-in"

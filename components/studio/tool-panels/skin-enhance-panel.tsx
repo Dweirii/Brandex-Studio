@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Sparkles } from "lucide-react";
 import { toast } from "sonner";
+import { BuyCreditsPrompt } from "@/components/studio/buy-credits-prompt";
 
 export function SkinEnhancePanel() {
   const { studioUpload } = useStudioApi();
@@ -177,9 +178,7 @@ export function SkinEnhancePanel() {
       </Button>
 
       {!canAfford && (
-        <p className="text-center text-xs text-destructive">
-          You need {creditCost} credits. Current balance: {balance}
-        </p>
+        <BuyCreditsPrompt needed={creditCost} balance={balance} />
       )}
     </div>
   );

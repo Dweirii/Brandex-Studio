@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/card";
 import { Maximize2, Coins, Sparkles } from "lucide-react";
 import { toast } from "sonner";
+import { BuyCreditsPrompt } from "@/components/studio/buy-credits-prompt";
 
 const COST = 20;
 
@@ -211,9 +212,7 @@ export function ImageExpandPanel() {
       </div>
 
       {!canAfford && (
-        <p className="text-center text-xs text-destructive">
-          You need {COST} credits. Current balance: {balance}
-        </p>
+        <BuyCreditsPrompt needed={COST} balance={balance} />
       )}
 
       {/* Tip */}

@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/card";
 import { Eraser, RotateCcw, Coins, Minus, Plus } from "lucide-react";
 import { toast } from "sonner";
+import { BuyCreditsPrompt } from "@/components/studio/buy-credits-prompt";
 
 const COST = 25;
 
@@ -261,9 +262,7 @@ export function AiEditPanel() {
       </div>
 
       {!canAfford && (
-        <p className="text-center text-xs text-destructive">
-          You need {COST} credits. Current balance: {balance}
-        </p>
+        <BuyCreditsPrompt needed={COST} balance={balance} />
       )}
 
       {/* ── Tip ───────────────────────────────────────────────────────── */}

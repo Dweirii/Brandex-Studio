@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { BrainCircuit, Sparkles } from "lucide-react";
 import { toast } from "sonner";
+import { BuyCreditsPrompt } from "@/components/studio/buy-credits-prompt";
 import {
   Select,
   SelectContent,
@@ -190,9 +191,7 @@ export function GenerateGeminiPanel() {
       </Button>
 
       {!canAfford && (
-        <p className="text-center text-xs text-destructive">
-          You need {creditCost} credits. Current balance: {balance}
-        </p>
+        <BuyCreditsPrompt needed={creditCost} balance={balance} />
       )}
     </div>
   );

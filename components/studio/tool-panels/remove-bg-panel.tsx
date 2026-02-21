@@ -2,6 +2,7 @@
 
 import { useRef } from "react";
 import { Eraser, Coins } from "lucide-react";
+import { BuyCreditsPrompt } from "@/components/studio/buy-credits-prompt";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useStudioStore } from "@/stores/use-studio-store";
@@ -109,9 +110,7 @@ export function RemoveBgPanel() {
           </Button>
 
           {!canAfford && (
-            <p className="text-center text-xs text-destructive">
-              You need {COST} credits. Current balance: {balance}
-            </p>
+            <BuyCreditsPrompt needed={COST} balance={balance} />
           )}
         </div>
       </CardContent>
