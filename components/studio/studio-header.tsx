@@ -42,9 +42,9 @@ export function StudioHeader({ onOpenGuide }: StudioHeaderProps) {
   const activeImage = images.find((img) => img.id === activeImageId);
   const hasParent = activeImage?.parentId != null;
 
-  const storeUrl = process.env.NEXT_PUBLIC_STORE_URL || "http://localhost:3000";
-  const LOW_CREDITS_THRESHOLD = 20;
-
+  // Get Store URL from env
+  const storeUrl = process.env.NEXT_PUBLIC_STORE_URL || "https://brandexme.com/credits";
+  const LOW_CREDITS_THRESHOLD = 20; 
   return (
     <header className="group/header flex h-14 shrink-0 items-center justify-between bg-[#141517] shadow-[0_0_10px_0_rgba(0,0,0,0.6)] backdrop-blur-2xl px-2 lg:px-4 relative">
       {/* Left: Back + Logo + Project Name */}
