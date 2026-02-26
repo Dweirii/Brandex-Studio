@@ -15,13 +15,13 @@ export function StudioLogo() {
     if (!mounted) {
       if (typeof window !== "undefined") {
         const systemPreference = window.matchMedia("(prefers-color-scheme: dark)").matches;
-        return systemPreference ? "/Logo-white.png" : "/Logo.png";
+        return systemPreference ? "/Logo-white.png" : "/Logo.svg";
       }
-      return "/Logo.png";
+      return "/Logo.svg";
     }
 
     const currentTheme = theme === "system" ? systemTheme : theme;
-    return currentTheme === "dark" ? "/Logo-white.png" : "/Logo.png";
+    return currentTheme === "dark" ? "/Logo-white.png" : "/Logo.svg";
   };
 
   const logoSrc = getLogoSrc();

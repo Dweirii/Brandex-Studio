@@ -7,7 +7,7 @@ export default function SignUpPage() {
       <div className="flex flex-col items-center gap-8">
         <div className="flex flex-col items-center gap-3">
           <Image
-            src="/Logo.png"
+            src="/Logo.svg"
             width={200}
             height={60}
             alt="Brandex Studio"

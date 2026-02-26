@@ -45,7 +45,7 @@
   --popover: #ffffff;
   --popover-foreground: #020817;
 
-  --primary: #00EB02;
+  --primary: #00da20;
   --primary-foreground: #000000;
 
   --secondary: #94A394;
@@ -54,7 +54,7 @@
   --muted: #e9ecef;
   --muted-foreground: #94A394;
 
-  --accent: #00EB02;
+  --accent: #00da20;
   --accent-foreground: #000000;
 
   --destructive: #dc3545;
@@ -62,7 +62,7 @@
 
   --border: #dee2e6;
   --input: #ced4da;
-  --ring: #00EB02;
+  --ring: #00da20;
 
   --radius: 10px;
 
@@ -84,8 +84,8 @@
   --popover: #1a1a1a;
   --popover-foreground: #f0f0f0;
 
-  /* Bright green without glow */
-  --primary: #00EB02;
+  /* Brand green */
+  --primary: #00da20;
   --primary-foreground: #000000;
 
   /* Improved secondary: warm gray-taupe for better contrast */
@@ -97,7 +97,7 @@
   --muted-foreground: #a0a0a0;
 
   /* Keep accent as your green */
-  --accent: #00EB02;
+  --accent: #00da20;
   --accent-foreground: #000000;
 
   /* Better destructive red for dark mode */
@@ -107,7 +107,7 @@
   /* Improved borders for better hierarchy */
   --border: #2d2d2d;
   --input: #252525;
-  --ring: #00EB02;
+  --ring: #00da20;
 
   /* Sidebar improvements */
   --sidebar: #141414;
@@ -143,7 +143,7 @@
 
   /* Ensure content is above background effects */
   #__next,
-  body > div:first-child {
+  body>div:first-child {
     position: relative;
     z-index: 1;
   }
@@ -151,6 +151,7 @@
 
 /* Typography improvements for better readability */
 @layer components {
+
   /* Enhanced heading styles */
   .heading-hero {
     @apply text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-bold;
@@ -207,6 +208,7 @@
       opacity: 0;
       transform: translateZ(0);
     }
+
     to {
       opacity: 1;
       transform: translateZ(0);
@@ -218,6 +220,7 @@
       opacity: 0;
       transform: translateY(20px) translateZ(0);
     }
+
     to {
       opacity: 1;
       transform: translateY(0) translateZ(0);
@@ -229,6 +232,7 @@
     from {
       height: 0;
     }
+
     to {
       height: var(--radix-accordion-content-height);
     }
@@ -238,6 +242,7 @@
     from {
       height: var(--radix-accordion-content-height);
     }
+
     to {
       height: 0;
     }
@@ -247,33 +252,43 @@
     0% {
       transform: translateX(-100%);
     }
+
     100% {
       transform: translateX(100%);
     }
   }
 
   @keyframes float {
-    0%, 100% {
+
+    0%,
+    100% {
       transform: translateY(0px);
     }
+
     50% {
       transform: translateY(-10px);
     }
   }
 
   @keyframes pulse-glow {
-    0%, 100% {
+
+    0%,
+    100% {
       box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
     }
+
     50% {
       box-shadow: 0 0 30px rgba(0, 0, 0, 0.4);
     }
   }
 
   @keyframes gradient-shift {
-    0%, 100% {
+
+    0%,
+    100% {
       background-position: 0% 50%;
     }
+
     50% {
       background-position: 100% 50%;
     }
@@ -333,13 +348,13 @@
     background: var(--primary);
     cursor: pointer;
     border: 2px solid rgba(255, 255, 255, 0.2);
-    box-shadow: 0 0 6px rgba(0, 235, 2, 0.3);
+    box-shadow: 0 0 6px rgba(0, 218, 32, 0.3);
     transition: transform 0.15s ease, box-shadow 0.15s ease;
   }
 
   .studio-slider::-webkit-slider-thumb:hover {
     transform: scale(1.3);
-    box-shadow: 0 0 10px rgba(0, 235, 2, 0.5);
+    box-shadow: 0 0 10px rgba(0, 218, 32, 0.5);
   }
 
   .studio-slider::-webkit-slider-thumb:active {
@@ -353,7 +368,7 @@
     background: var(--primary);
     cursor: pointer;
     border: 2px solid rgba(255, 255, 255, 0.2);
-    box-shadow: 0 0 6px rgba(0, 235, 2, 0.3);
+    box-shadow: 0 0 6px rgba(0, 218, 32, 0.3);
     transition: transform 0.15s ease;
   }
 
@@ -390,12 +405,10 @@
 
   /* Text shimmer effect */
   .text-shimmer {
-    background: linear-gradient(
-      90deg,
-      rgba(255, 255, 255, 0.8) 0%,
-      rgba(255, 255, 255, 1) 50%,
-      rgba(255, 255, 255, 0.8) 100%
-    );
+    background: linear-gradient(90deg,
+        rgba(255, 255, 255, 0.8) 0%,
+        rgba(255, 255, 255, 1) 50%,
+        rgba(255, 255, 255, 0.8) 100%);
     background-size: 200% auto;
     background-clip: text;
     -webkit-background-clip: text;
