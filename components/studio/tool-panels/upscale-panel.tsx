@@ -8,7 +8,6 @@ import { handleError } from "@/lib/error-handler";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { ZoomIn, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { BuyCreditsPrompt } from "@/components/studio/buy-credits-prompt";
 
@@ -92,10 +91,7 @@ export function UpscalePanel() {
     <div className="space-y-4">
       {/* Header */}
       <div className="space-y-1">
-        <div className="flex items-center gap-2">
-          <ZoomIn className="h-4 w-4" />
-          <h3 className="font-semibold">Upscale Image</h3>
-        </div>
+        <h3 className="text-sm font-semibold">Upscale Image</h3>
         <p className="text-xs text-muted-foreground">
           Magnific AI — Industry-leading upscaler
         </p>
@@ -156,7 +152,6 @@ export function UpscalePanel() {
         className="w-full"
         size="lg"
       >
-        <Sparkles className="mr-2 h-4 w-4" />
         {!canAfford ? "Not enough credits" : `Upscale (${creditCost} credits)`}
       </Button>
 

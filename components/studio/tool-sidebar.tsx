@@ -2,11 +2,7 @@
 
 import {
   Eraser,
-  ImagePlus,
-  Paintbrush,
   Wand2,
-  ZoomIn,
-  Sun,
   Sparkles,
   Type,
   BrainCircuit,
@@ -14,8 +10,6 @@ import {
   SlidersHorizontal,
   Maximize2,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import {
   Tooltip,
   TooltipContent,
@@ -191,40 +185,40 @@ export function ToolSidebar() {
         <TooltipTrigger asChild>
           <button
             className={cn(
-              "group/tool relative flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2.5 text-left transition-all duration-300",
+              "group/tool relative flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left transition-colors",
               isActive
-                ? "bg-[#141517] text-primary shadow-[0_0_10px_0_rgba(0,0,0,0.5)]"
-                : "text-white/40 hover:text-white/80 hover:bg-white/[0.06] active:scale-[0.98]",
-              !isActive && !isDisabled && "hover:shadow-[0_0_8px_0_rgba(255,255,255,0.05)]",
+                ? "bg-white/[0.06] text-white"
+                : "text-white/55 hover:text-white hover:bg-white/[0.04]",
               isDisabled && "opacity-30 pointer-events-none"
             )}
             disabled={isDisabled}
             onClick={() => setTool(selectedTool === tool.id ? null : tool.id)}
           >
-            {/* Active indicator */}
+            {/* Active accent bar */}
             {isActive && (
-              <div className="absolute -left-1 top-1/2 -translate-y-1/2 h-8 w-1 rounded-r-full bg-primary" />
+              <div className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-[3px] rounded-r-full bg-primary" />
             )}
-            
-            <span className={cn(
-              "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-all duration-300",
-              isActive 
-                ? "bg-primary/20 text-primary scale-105" 
-                : "bg-white/[0.06] group-hover/tool:bg-white/[0.1] group-hover/tool:scale-105"
-            )}>
+
+            <span
+              className={cn(
+                "flex h-8 w-8 shrink-0 items-center justify-center rounded-md transition-colors",
+                isActive
+                  ? "text-primary"
+                  : "text-white/50 group-hover/tool:text-white/80"
+              )}
+            >
               {tool.icon}
             </span>
             <div className="hidden lg:flex flex-col min-w-0 flex-1">
-              <span className={cn(
-                "truncate text-[11.5px] font-semibold leading-tight transition-colors duration-300",
-                isActive && "drop-shadow-sm"
-              )}>
+              <span className="truncate text-[12px] font-medium leading-tight">
                 {tool.label}
               </span>
-              <span className={cn(
-                "text-[10px] font-medium leading-tight transition-colors duration-300 tabular-nums",
-                isActive ? "text-primary/70" : "text-white/30 group-hover/tool:text-white/40"
-              )}>
+              <span
+                className={cn(
+                  "mt-0.5 text-[10px] leading-tight tabular-nums transition-colors",
+                  isActive ? "text-white/45" : "text-white/30"
+                )}
+              >
                 {tool.credits === 0 ? "Free" : `${tool.credits} cr`}
               </span>
             </div>
@@ -246,21 +240,16 @@ export function ToolSidebar() {
 
   return (
     <TooltipProvider delayDuration={0}>
-      <aside className="relative flex w-16 lg:w-[140px] xl:w-[168px] shrink-0 flex-col bg-[#141517] shadow-[0_0_10px_0_rgba(0,0,0,0.6)]">
-        <div className="relative flex flex-col gap-1.5 overflow-y-auto px-2.5 py-4 scrollbar-none">
+      <aside className="relative flex w-16 lg:w-[148px] xl:w-[176px] shrink-0 flex-col bg-[#141517] shadow-[0_0_10px_0_rgba(0,0,0,0.6)]">
+        <div className="relative flex flex-col overflow-y-auto px-2 py-4 scrollbar-none">
           {toolGroups.map((group, groupIndex) => (
-            <div key={group.label} className="space-y-1">
-              {groupIndex > 0 && (
-                <div className="relative my-3 px-2">
-                  <Separator className="bg-gradient-to-r from-transparent via-white/[0.08] to-transparent" />
-                </div>
-              )}
-              <div className="px-2.5 py-2">
-                <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-white/30 drop-shadow-sm">
+            <div key={group.label} className={cn(groupIndex > 0 && "mt-5")}>
+              <div className="px-3 pb-2">
+                <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-white/35">
                   {group.label}
                 </span>
               </div>
-              <div className="space-y-1">
+              <div className="space-y-0.5">
                 {group.tools.map(renderToolButton)}
               </div>
             </div>

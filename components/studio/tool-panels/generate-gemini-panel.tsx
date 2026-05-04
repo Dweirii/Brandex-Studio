@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { BrainCircuit, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { BuyCreditsPrompt } from "@/components/studio/buy-credits-prompt";
 import {
@@ -93,10 +92,7 @@ export function GenerateGeminiPanel() {
     <div className="space-y-4">
       {/* Header */}
       <div className="space-y-1">
-        <div className="flex items-center gap-2">
-          <BrainCircuit className="h-4 w-4" />
-          <h3 className="font-semibold">Gemini Generate</h3>
-        </div>
+        <h3 className="text-sm font-semibold">Gemini Generate</h3>
         <p className="text-xs text-muted-foreground">
           Google Gemini AI — high-quality image generation with reference support
         </p>
@@ -166,7 +162,7 @@ export function GenerateGeminiPanel() {
       {/* Negative Prompt */}
       <div className="space-y-2 rounded-lg border bg-muted/30 p-3">
         <Label htmlFor="gemini-negative" className="text-xs font-medium text-muted-foreground">
-          Negative Prompt (optional)
+          Negative Prompt
         </Label>
         <Textarea
           id="gemini-negative"
@@ -186,7 +182,6 @@ export function GenerateGeminiPanel() {
         className="w-full"
         size="lg"
       >
-        <Sparkles className="mr-2 h-4 w-4" />
         {!canAfford ? "Not enough credits" : `Generate (${creditCost} credits)`}
       </Button>
 

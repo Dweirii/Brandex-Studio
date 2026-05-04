@@ -49,37 +49,30 @@ export default function StudioPage() {
   }, []);
 
   // Fetch projects on mount
-  useEffect(() => {
-    let cancelled = false;
-
-    async function loadProjects() {
-      setLoadingProjects(true);
-      try {
-        const data = await studioRequest<
-          Array<{
-            id: string;
-            name: string;
-            imageCount: number;
-            thumbnail: string | null;
-            createdAt: string;
-            updatedAt: string;
-          }>
-        >("/projects");
-        if (!cancelled) {
-          setProjects(data);
-        }
-      } catch (error) {
-        handleError(error, { operation: "load projects" });
-      } finally {
-        if (!cancelled) setLoadingProjects(false);
-      }
+  const loadProjects = useCallback(async () => {
+    setLoadingProjects(true);
+    try {
+      const data = await studioRequest<
+        Array<{
+          id: string;
+          name: string;
+          imageCount: number;
+          thumbnail: string | null;
+          createdAt: string;
+          updatedAt: string;
+        }>
+      >("/projects");
+      setProjects(data);
+    } catch (error) {
+      handleError(error, { operation: "load projects", onRetry: () => loadProjects() });
+    } finally {
+      setLoadingProjects(false);
     }
-
-    loadProjects();
-    return () => {
-      cancelled = true;
-    };
   }, [studioRequest, setProjects, setLoadingProjects]);
+
+  useEffect(() => {
+    loadProjects();
+  }, [loadProjects]);
 
   // Handle image upload — sends file to server
   const handleUpload = useCallback(
@@ -134,8 +127,11 @@ export default function StudioPage() {
             createdAt: new Date().toISOString(),
           });
           toast.success("Image loaded locally. Select a tool to get started.");
-        } catch (fallbackError) {
-          handleError(error, { operation: "upload image" });
+        } catch {
+          handleError(error, {
+            operation: "upload image",
+            onRetry: () => handleUpload(file),
+          });
         }
       } finally {
         setProcessing(false);
@@ -143,6 +139,38 @@ export default function StudioPage() {
     },
     [projectId, addImage, setProcessing, studioUpload]
   );
+
+  // Paste-to-upload: when no images yet, pasting an image from the clipboard uploads it
+  useEffect(() => {
+    if (view !== "workspace") return;
+    if (images.length > 0) return;
+    if (!projectId || isProcessing) return;
+
+    const onPaste = (e: ClipboardEvent) => {
+      // Skip when the user is pasting into a real input/textarea/contenteditable
+      const target = e.target as HTMLElement | null;
+      if (target) {
+        const tag = target.tagName;
+        if (tag === "INPUT" || tag === "TEXTAREA" || target.isContentEditable) return;
+      }
+
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      for (const item of Array.from(items)) {
+        if (item.kind === "file" && item.type.startsWith("image/")) {
+          const file = item.getAsFile();
+          if (file) {
+            e.preventDefault();
+            handleUpload(file);
+            return;
+          }
+        }
+      }
+    };
+
+    window.addEventListener("paste", onPaste);
+    return () => window.removeEventListener("paste", onPaste);
+  }, [view, images.length, projectId, isProcessing, handleUpload]);
 
   // Show project browser when in browser mode
   if (view === "browser") {
@@ -187,6 +215,12 @@ export default function StudioPage() {
                     onUpload={handleUpload}
                     isDisabled={isProcessing || !projectId}
                   />
+                  <p className="mt-5 text-center text-[11px] font-medium tracking-wider text-white/30">
+                    Or paste an image with{" "}
+                    <kbd className="mx-0.5 rounded bg-white/10 px-1.5 py-0.5 font-mono text-[10px] text-white/50">
+                      ⌘ V
+                    </kbd>
+                  </p>
                 </div>
               </div>
             </div>

@@ -2,7 +2,6 @@
 
 import { useRef, useCallback } from "react";
 import {
-  SlidersHorizontal,
   RotateCcw,
   Sun,
   Contrast,
@@ -187,10 +186,7 @@ export function AdjustmentsPanel() {
       {/* Header */}
       <Card className="border-0 shadow-none bg-transparent">
         <CardHeader className="px-0 pt-0 pb-3">
-          <CardTitle className="flex items-center gap-2 text-sm">
-            <SlidersHorizontal className="h-4 w-4" />
-            Quick Adjustments
-          </CardTitle>
+          <CardTitle className="text-sm">Quick Adjustments</CardTitle>
           <CardDescription>
             Fine-tune brightness, contrast, and saturation with real-time
             non-destructive preview.

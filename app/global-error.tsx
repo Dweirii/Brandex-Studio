@@ -19,7 +19,7 @@ export default function GlobalError({
           </div>
           <button
             onClick={reset}
-            className="rounded-xl bg-[#00EB02] px-6 py-3 text-sm font-semibold text-black"
+            className="rounded-xl bg-[#00B81A] px-6 py-3 text-sm font-semibold text-white"
           >
             Try Again
           </button>

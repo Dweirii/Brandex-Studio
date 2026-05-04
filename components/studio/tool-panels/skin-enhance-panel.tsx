@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { BuyCreditsPrompt } from "@/components/studio/buy-credits-prompt";
 
@@ -95,10 +94,7 @@ export function SkinEnhancePanel() {
     <div className="space-y-4">
       {/* Header */}
       <div className="space-y-1">
-        <div className="flex items-center gap-2">
-          <Sparkles className="h-4 w-4" />
-          <h3 className="font-semibold">Enhance Skin</h3>
-        </div>
+        <h3 className="text-sm font-semibold">Enhance Skin</h3>
         <p className="text-xs text-muted-foreground">
           Professional skin enhancement for portraits
         </p>
@@ -173,7 +169,6 @@ export function SkinEnhancePanel() {
         className="w-full"
         size="lg"
       >
-        <Sparkles className="mr-2 h-4 w-4" />
         {!canAfford ? "Not enough credits" : `Enhance (${creditCost} credits)`}
       </Button>
 

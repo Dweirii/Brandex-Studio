@@ -1,5 +1,6 @@
 import { toast } from "sonner";
 import { StudioApiError } from "@/hooks/use-studio-api";
+import { useStudioStore } from "@/stores/use-studio-store";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -12,6 +13,11 @@ interface ErrorContext {
   operation?: string;
   /** Suppress console.error (default: false) */
   silent?: boolean;
+  /**
+   * When provided, retryable error toasts (network, timeout, 5xx, rate-limited)
+   * include a "Retry" action button that invokes this callback.
+   */
+  onRetry?: () => void;
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -20,6 +26,30 @@ function fallbackDescription(operation?: string) {
   return operation
     ? `Unable to ${operation}. Please try again.`
     : "Something unexpected happened. Please try again.";
+}
+
+function retryAction(onRetry?: () => void) {
+  return onRetry ? { label: "Retry", onClick: onRetry } : undefined;
+}
+
+function showNetworkErrorToast(onRetry?: () => void) {
+  const isOffline = typeof navigator !== "undefined" && navigator.onLine === false;
+  const action = retryAction(onRetry);
+  if (isOffline) {
+    toast.error("You're Offline", {
+      description:
+        "It looks like your device is offline. Please check your internet connection and try again.",
+      duration: 8000,
+      action,
+    });
+  } else {
+    toast.error("Server Unreachable", {
+      description:
+        "We couldn't reach the server. Please try again — if this keeps happening, contact support.",
+      duration: 8000,
+      action,
+    });
+  }
 }
 
 // ── Main handler ─────────────────────────────────────────────────────────────
@@ -36,7 +66,7 @@ function fallbackDescription(operation?: string) {
  * ```
  */
 export function handleError(error: unknown, context?: ErrorContext) {
-  const { operation, silent } = context ?? {};
+  const { operation, silent, onRetry } = context ?? {};
 
   // Always log unless explicitly silenced
   if (!silent) {
@@ -46,12 +76,16 @@ export function handleError(error: unknown, context?: ErrorContext) {
   // ── StudioApiError (our custom server error class) ───────────────────────
 
   if (error instanceof StudioApiError) {
-    // Insufficient credits
+    // Insufficient credits — offer "Top Up" action that opens the buy-credits modal
     if (error.requiresCredits) {
       toast.error("Insufficient Credits", {
         description:
           "You don't have enough credits for this action. Top up to keep creating.",
         duration: 8000,
+        action: {
+          label: "Top Up",
+          onClick: () => useStudioStore.getState().setShowBuyCredits(true),
+        },
       });
       return;
     }
@@ -82,6 +116,7 @@ export function handleError(error: unknown, context?: ErrorContext) {
         description:
           "This is taking longer than expected. Please try again — if the issue persists, try with a smaller image.",
         duration: 8000,
+        action: retryAction(onRetry),
       });
       return;
     }
@@ -92,6 +127,7 @@ export function handleError(error: unknown, context?: ErrorContext) {
         description:
           "You're sending requests too quickly. Please wait a moment and try again.",
         duration: 6000,
+        action: retryAction(onRetry),
       });
       return;
     }
@@ -112,17 +148,14 @@ export function handleError(error: unknown, context?: ErrorContext) {
         description:
           "Something went wrong on our end. Please try again in a few moments.",
         duration: 6000,
+        action: retryAction(onRetry),
       });
       return;
     }
 
     // Network unreachable (status 0 = fetch itself failed)
     if (error.status === 0 && !error.message.includes("not configured")) {
-      toast.error("Connection Lost", {
-        description:
-          "Unable to reach our servers. Please check your internet connection and try again.",
-        duration: 8000,
-      });
+      showNetworkErrorToast(onRetry);
       return;
     }
 
@@ -130,6 +163,7 @@ export function handleError(error: unknown, context?: ErrorContext) {
     toast.error("Something Went Wrong", {
       description: error.message || fallbackDescription(operation),
       duration: 6000,
+      action: retryAction(onRetry),
     });
     return;
   }
@@ -142,11 +176,7 @@ export function handleError(error: unknown, context?: ErrorContext) {
       error.name === "TypeError" &&
       (error.message.includes("fetch") || error.message.includes("network"))
     ) {
-      toast.error("Connection Lost", {
-        description:
-          "Unable to reach our servers. Please check your internet connection and try again.",
-        duration: 8000,
-      });
+      showNetworkErrorToast(onRetry);
       return;
     }
 
@@ -156,6 +186,7 @@ export function handleError(error: unknown, context?: ErrorContext) {
         description:
           "The operation was interrupted. Please try again.",
         duration: 5000,
+        action: retryAction(onRetry),
       });
       return;
     }
@@ -164,6 +195,7 @@ export function handleError(error: unknown, context?: ErrorContext) {
     toast.error("Something Went Wrong", {
       description: error.message || fallbackDescription(operation),
       duration: 6000,
+      action: retryAction(onRetry),
     });
     return;
   }
@@ -173,5 +205,6 @@ export function handleError(error: unknown, context?: ErrorContext) {
   toast.error("Something Went Wrong", {
     description: fallbackDescription(operation),
     duration: 6000,
+    action: retryAction(onRetry),
   });
 }

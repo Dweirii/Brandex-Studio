@@ -27,7 +27,7 @@ export default function Error({
       </div>
       <button
         onClick={reset}
-        className="flex items-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-black transition-all hover:bg-primary/90 hover:scale-105"
+        className="flex items-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-primary/90 hover:scale-105"
       >
         <RotateCcw className="h-4 w-4" />
         Try Again

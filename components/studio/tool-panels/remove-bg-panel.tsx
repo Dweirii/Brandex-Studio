@@ -1,7 +1,6 @@
 "use client";
 
 import { useRef } from "react";
-import { Eraser, Coins } from "lucide-react";
 import { BuyCreditsPrompt } from "@/components/studio/buy-credits-prompt";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -72,7 +71,7 @@ export function RemoveBgPanel() {
       setBalanceFromResponse(result.newBalance);
       toast.success("Background removed successfully!");
     } catch (error) {
-      handleError(error, { operation: "remove background" });
+      handleError(error, { operation: "remove background", onRetry: handleRemoveBg });
     } finally {
       isSubmittingRef.current = false;
       setProcessing(false);
@@ -82,10 +81,7 @@ export function RemoveBgPanel() {
   return (
     <Card className="border-0 shadow-none">
       <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-sm">
-          <Eraser className="h-4 w-4" />
-          Remove Background
-        </CardTitle>
+        <CardTitle className="text-sm">Remove Background</CardTitle>
         <CardDescription>
           Remove the background from your product image. Creates a transparent
           PNG.
@@ -95,10 +91,7 @@ export function RemoveBgPanel() {
         <div className="space-y-3">
           <div className="flex items-center justify-between rounded-lg bg-muted px-3 py-2 text-sm">
             <span className="text-muted-foreground">Cost</span>
-            <span className="flex items-center gap-1 font-medium">
-              <Coins className="h-3.5 w-3.5 text-amber-500" />
-              {COST} credits
-            </span>
+            <span className="font-medium">{COST} credits</span>
           </div>
 
           <Button

@@ -125,7 +125,7 @@ export function ImageFilters({ onFilterChange, filteredCount, totalCount }: Imag
                     className={cn(
                       "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all duration-300",
                       isActive
-                        ? "bg-primary text-black shadow-[0_0_8px_0_rgba(0,0,0,0.4)]"
+                        ? "bg-primary text-white shadow-[0_0_8px_0_rgba(0,0,0,0.4)]"
                         : "bg-white/[0.05] text-white/60 hover:bg-white/[0.1] hover:text-white/80"
                     )}
                   >

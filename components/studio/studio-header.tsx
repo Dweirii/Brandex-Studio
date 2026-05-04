@@ -139,7 +139,7 @@ export function StudioHeader({ onOpenGuide }: StudioHeaderProps) {
                     className={cn(
                       "flex h-7 w-7 items-center justify-center rounded-lg text-xs transition-all duration-300",
                       canvasBackground === bg.id
-                        ? "bg-primary text-black shadow-[0_0_8px_0_rgba(0,0,0,0.4)] scale-105"
+                        ? "bg-primary text-white shadow-[0_0_8px_0_rgba(0,0,0,0.4)] scale-105"
                         : "text-white/40 hover:text-white/70 hover:bg-white/[0.08]"
                     )}
                   >

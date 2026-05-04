@@ -91,7 +91,7 @@ function ProjectCard({
           <div className="flex items-center gap-2 translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
             <Button
               size="sm"
-              className="h-10 gap-2 bg-primary text-black hover:bg-primary/90 font-semibold shadow-[0_0_10px_0_rgba(0,0,0,0.5)] hover:scale-105 transition-all duration-300"
+              className="h-10 gap-2 bg-primary text-white hover:bg-primary/90 font-semibold shadow-[0_0_10px_0_rgba(0,0,0,0.5)] hover:scale-105 transition-all duration-300"
               onClick={(e) => {
                 e.stopPropagation();
                 onOpen();
@@ -343,7 +343,7 @@ export function ProjectBrowser() {
             <Button
               onClick={handleCreateProject}
               disabled={isCreating}
-              className="gap-2 bg-primary text-black hover:bg-primary/90 font-semibold shadow-[0_0_15px_0_rgba(0,0,0,0.5)] transition-all duration-300 hover:scale-105"
+              className="gap-2 bg-primary text-white hover:bg-primary/90 font-semibold shadow-[0_0_15px_0_rgba(0,0,0,0.5)] transition-all duration-300 hover:scale-105"
               size="lg"
             >
               <Plus className="h-5 w-5" />
@@ -381,7 +381,7 @@ export function ProjectBrowser() {
               <Button
                 onClick={handleCreateProject}
                 disabled={isCreating}
-                className="gap-2 bg-primary text-black hover:bg-primary/90 font-semibold shadow-[0_0_15px_0_rgba(0,0,0,0.5)] transition-all duration-300 hover:scale-105"
+                className="gap-2 bg-primary text-white hover:bg-primary/90 font-semibold shadow-[0_0_15px_0_rgba(0,0,0,0.5)] transition-all duration-300 hover:scale-105"
                 size="lg"
               >
                 <Plus className="h-5 w-5" />

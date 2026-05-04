@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run *)",
+      "Bash(grep -E -A3 \"tool-sidebar.tsx$\")"
+    ]
+  }
+}

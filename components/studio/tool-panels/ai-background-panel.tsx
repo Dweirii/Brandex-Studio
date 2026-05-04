@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { ImagePlus, Coins } from "lucide-react";
 import { BuyCreditsPrompt } from "@/components/studio/buy-credits-prompt";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -113,10 +112,7 @@ export function AiBackgroundPanel() {
   return (
     <Card className="border-0 shadow-none">
       <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-sm">
-          <ImagePlus className="h-4 w-4" />
-          AI Background
-        </CardTitle>
+        <CardTitle className="text-sm">AI Background</CardTitle>
         <CardDescription>
           Generate a professional scene behind your product.
         </CardDescription>
@@ -173,10 +169,7 @@ export function AiBackgroundPanel() {
           {/* Cost + Generate */}
           <div className="flex items-center justify-between rounded-lg bg-muted px-3 py-2 text-sm">
             <span className="text-muted-foreground">Cost</span>
-            <span className="flex items-center gap-1 font-medium">
-              <Coins className="h-3.5 w-3.5 text-amber-500" />
-              {COST} credits
-            </span>
+            <span className="font-medium">{COST} credits</span>
           </div>
 
           <Button

@@ -143,7 +143,7 @@ export function ComparisonView() {
                     className={cn(
                       "flex h-7 w-7 items-center justify-center rounded-lg transition-all duration-300",
                       mode === "slider"
-                        ? "bg-primary text-black shadow-sm"
+                        ? "bg-primary text-white shadow-sm"
                         : "text-white/40 hover:text-white/70 hover:bg-white/5"
                     )}
                   >
@@ -162,7 +162,7 @@ export function ComparisonView() {
                     className={cn(
                       "flex h-7 w-7 items-center justify-center rounded-lg transition-all duration-300",
                       mode === "sideBySide"
-                        ? "bg-primary text-black shadow-sm"
+                        ? "bg-primary text-white shadow-sm"
                         : "text-white/40 hover:text-white/70 hover:bg-white/5"
                     )}
                   >
@@ -194,7 +194,7 @@ export function ComparisonView() {
             <ReactCompareImage
               leftImage={leftImage.url}
               rightImage={rightImage.url}
-              sliderLineColor="#00EB02"
+              sliderLineColor="#00B81A"
               sliderLineWidth={2}
               handleSize={40}
               hover={false}

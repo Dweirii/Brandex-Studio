@@ -59,7 +59,7 @@ function WelcomePage({ onNext }: GuidePageProps) {
             draggable={false}
           />
         </div>
-        <div className="absolute -top-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-black shadow-lg">
+        <div className="absolute -top-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-white shadow-lg">
           AI
         </div>
       </div>
@@ -148,7 +148,7 @@ function WorkflowPage(_props: GuidePageProps) {
               <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/15 transition-colors group-hover:bg-primary/20">
                 <step.icon className="h-5 w-5 text-primary/80" />
               </div>
-              <div className="absolute -top-1.5 -left-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-black">
+              <div className="absolute -top-1.5 -left-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-white">
                 {index + 1}
               </div>
             </div>

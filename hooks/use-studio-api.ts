@@ -38,6 +38,9 @@ export function useStudioApi() {
   /**
    * Make an authenticated JSON request to the Studio API.
    * Includes timeout handling and preserves server error metadata.
+   *
+   * Auto-retries once on transient network failures (status 0) where
+   * the request likely never reached the server.
    */
   const studioRequest = useCallback(
     async <T = unknown>(
@@ -46,61 +49,74 @@ export function useStudioApi() {
     ): Promise<T> => {
       if (!API_URL) throw new StudioApiError("API URL not configured", 0);
 
-      const token = await getToken({ template: "CustomerJWTBrandex" });
-      if (!token) throw new StudioApiError("Not authenticated", 401);
-
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS);
-
       const url = `${API_URL}/studio${path}`;
 
+      const attempt = async (): Promise<T> => {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS);
+
+        try {
+          const token = await getToken({ template: "CustomerJWTBrandex" });
+          if (!token) throw new StudioApiError("Not authenticated", 401);
+
+          const hasBody = options.body !== undefined;
+          const headers: Record<string, string> = {
+            Authorization: `Bearer ${token}`,
+            ...(options.headers as Record<string, string> || {}),
+          };
+
+          // Only set Content-Type for requests with a body
+          if (hasBody && !headers["Content-Type"]) {
+            headers["Content-Type"] = "application/json";
+          }
+
+          const res = await fetch(url, {
+            ...options,
+            headers,
+            signal: controller.signal,
+          });
+
+          if (!res.ok) {
+            const errorData = await res.json().catch(() => ({ error: "Request failed" }));
+            throw new StudioApiError(
+              errorData.error || `API error: ${res.status}`,
+              res.status,
+              errorData.requiresCredits ?? false
+            );
+          }
+
+          // Handle 204 No Content
+          if (res.status === 204) {
+            return undefined as T;
+          }
+
+          return res.json();
+        } catch (error) {
+          if (error instanceof StudioApiError) throw error;
+          if (error instanceof Error && error.name === "AbortError") {
+            throw new StudioApiError(
+              "Request timed out. The operation is taking too long — please try again.",
+              408
+            );
+          }
+          throw new StudioApiError(
+            error instanceof Error ? error.message : "Network error",
+            0
+          );
+        } finally {
+          clearTimeout(timeout);
+        }
+      };
+
       try {
-        const hasBody = options.body !== undefined;
-        const headers: Record<string, string> = {
-          Authorization: `Bearer ${token}`,
-          ...(options.headers as Record<string, string> || {}),
-        };
-
-        // Only set Content-Type for requests with a body
-        if (hasBody && !headers["Content-Type"]) {
-          headers["Content-Type"] = "application/json";
-        }
-
-        const res = await fetch(url, {
-          ...options,
-          headers,
-          signal: controller.signal,
-        });
-
-        if (!res.ok) {
-          const errorData = await res.json().catch(() => ({ error: "Request failed" }));
-          throw new StudioApiError(
-            errorData.error || `API error: ${res.status}`,
-            res.status,
-            errorData.requiresCredits ?? false
-          );
-        }
-
-        // Handle 204 No Content
-        if (res.status === 204) {
-          return undefined as T;
-        }
-
-        return res.json();
+        return await attempt();
       } catch (error) {
-        if (error instanceof StudioApiError) throw error;
-        if (error instanceof Error && error.name === "AbortError") {
-          throw new StudioApiError(
-            "Request timed out. The operation is taking too long — please try again.",
-            408
-          );
+        // Retry once on transient network failures (request likely didn't reach the server)
+        if (error instanceof StudioApiError && error.status === 0 && !error.message.includes("not configured")) {
+          await new Promise((r) => setTimeout(r, 600));
+          return attempt();
         }
-        throw new StudioApiError(
-          error instanceof Error ? error.message : "Network error",
-          0
-        );
-      } finally {
-        clearTimeout(timeout);
+        throw error;
       }
     },
     [getToken]
@@ -124,9 +140,6 @@ export function useStudioApi() {
     ): Promise<T> => {
       if (!API_URL) throw new StudioApiError("API URL not configured", 0);
 
-      const token = await getToken({ template: "CustomerJWTBrandex" });
-      if (!token) throw new StudioApiError("Not authenticated", 401);
-
       const effectiveTimeout = options?.timeoutMs ?? UPLOAD_TIMEOUT_MS;
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), effectiveTimeout);
@@ -134,6 +147,9 @@ export function useStudioApi() {
       const url = `${API_URL}/studio${path}`;
 
       try {
+        const token = await getToken({ template: "CustomerJWTBrandex" });
+        if (!token) throw new StudioApiError("Not authenticated", 401);
+
         const res = await fetch(url, {
           method: "POST",
           headers: {

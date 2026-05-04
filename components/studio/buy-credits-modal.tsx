@@ -127,7 +127,7 @@ export function BuyCreditsModal() {
                 }`}
               >
                 {pack.highlight && (
-                  <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 rounded-full bg-primary px-2.5 py-0.5 text-[10px] font-bold text-black tracking-wide">
+                  <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 rounded-full bg-primary px-2.5 py-0.5 text-[10px] font-bold text-white tracking-wide">
                     BEST VALUE
                   </div>
                 )}
@@ -157,7 +157,7 @@ export function BuyCreditsModal() {
                   disabled={anyLoading}
                   className={`mt-auto flex w-full items-center justify-center gap-2 rounded-lg py-2 text-sm font-semibold transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
                     pack.highlight
-                      ? "bg-primary text-black hover:bg-primary/90 disabled:opacity-50"
+                      ? "bg-primary text-white hover:bg-primary/90 disabled:opacity-50"
                       : "bg-white/8 text-white hover:bg-white/[0.14] disabled:opacity-50"
                   }`}
                 >

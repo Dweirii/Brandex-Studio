@@ -18,7 +18,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Eraser, RotateCcw, Coins, Minus, Plus } from "lucide-react";
+import { RotateCcw, Minus, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { BuyCreditsPrompt } from "@/components/studio/buy-credits-prompt";
 
@@ -156,10 +156,7 @@ export function AiEditPanel() {
       {/* Header */}
       <Card className="border-0 shadow-none bg-transparent">
         <CardHeader className="px-0 pt-0 pb-3">
-          <CardTitle className="flex items-center gap-2 text-sm">
-            <Eraser className="h-4 w-4" />
-            AI Remover
-          </CardTitle>
+          <CardTitle className="text-sm">AI Remover</CardTitle>
           <CardDescription>
             Paint over any object to erase it from the image. The AI will
             cleanly fill the area with the surrounding background.
@@ -255,10 +252,7 @@ export function AiEditPanel() {
       {/* ── Cost ──────────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between rounded-lg bg-muted px-3 py-2 text-sm">
         <span className="text-muted-foreground">Cost</span>
-        <span className="flex items-center gap-1 font-medium">
-          <Coins className="h-3.5 w-3.5 text-amber-500" />
-          {COST} credits
-        </span>
+        <span className="font-medium">{COST} credits</span>
       </div>
 
       {!canAfford && (

@@ -2,7 +2,6 @@
 
 import { useCallback, useState } from "react";
 import {
-  Pipette,
   Copy,
   Check,
   Trash2,
@@ -129,10 +128,7 @@ export function ColorPickerPanel() {
       {/* Header */}
       <Card className="border-0 shadow-none bg-transparent">
         <CardHeader className="px-0 pt-0 pb-3">
-          <CardTitle className="flex items-center gap-2 text-sm">
-            <Pipette className="h-4 w-4" />
-            Color Picker
-          </CardTitle>
+          <CardTitle className="text-sm">Color Picker</CardTitle>
           <CardDescription>
             Click anywhere on the image to sample colors and build your palette.
           </CardDescription>

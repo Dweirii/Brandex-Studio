@@ -8,7 +8,6 @@ import { handleError } from "@/lib/error-handler";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Type, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { BuyCreditsPrompt } from "@/components/studio/buy-credits-prompt";
 import {
@@ -90,10 +89,7 @@ export function GenerateTypographyPanel() {
     <div className="space-y-4">
       {/* Header */}
       <div className="space-y-1">
-        <div className="flex items-center gap-2">
-          <Type className="h-4 w-4" />
-          <h3 className="font-semibold">Typography & Logos</h3>
-        </div>
+        <h3 className="text-sm font-semibold">Typography & Logos</h3>
         <p className="text-xs text-muted-foreground">
           Generate images with perfect text and typography
         </p>
@@ -158,7 +154,6 @@ export function GenerateTypographyPanel() {
         className="w-full"
         size="lg"
       >
-        <Sparkles className="mr-2 h-4 w-4" />
         {!canAfford ? "Not enough credits" : `Generate (${creditCost} credits)`}
       </Button>
 

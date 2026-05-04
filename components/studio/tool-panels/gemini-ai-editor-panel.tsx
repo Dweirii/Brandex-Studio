@@ -19,7 +19,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Wand2, Coins, Sparkles, RotateCcw, Info } from "lucide-react";
+import { RotateCcw, Info } from "lucide-react";
 import { toast } from "sonner";
 import { BuyCreditsPrompt } from "@/components/studio/buy-credits-prompt";
 import {
@@ -161,8 +161,7 @@ export function GeminiAiEditorPanel() {
       {/* Header */}
       <Card className="border-0 shadow-none bg-transparent">
         <CardHeader className="px-0 pt-0 pb-3">
-          <CardTitle className="flex items-center gap-2 text-sm">
-            <Wand2 className="h-4 w-4" />
+          <CardTitle className="text-sm">
             Gemini AI Editor
           </CardTitle>
           <CardDescription>
@@ -233,7 +232,6 @@ export function GeminiAiEditorPanel() {
           disabled={!activeImage || isProcessing || !canAfford || !prompt.trim()}
           onClick={handleEdit}
         >
-          <Sparkles className="mr-2 h-4 w-4" />
           {!canAfford
             ? "Not enough credits"
             : !prompt.trim()
@@ -257,10 +255,7 @@ export function GeminiAiEditorPanel() {
       {/* Cost */}
       <div className="flex items-center justify-between rounded-lg bg-muted px-3 py-2 text-sm">
         <span className="text-muted-foreground">Cost</span>
-        <span className="flex items-center gap-1 font-medium">
-          <Coins className="h-3.5 w-3.5 text-amber-500" />
-          {COST} credits
-        </span>
+        <span className="font-medium">{COST} credits</span>
       </div>
 
       {!canAfford && (
